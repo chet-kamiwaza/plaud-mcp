@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: API Client** - Authenticated HTTP client that successfully talks to Plaud's cloud API (completed 2026-04-09)
 - [ ] **Phase 2: MCP Tools** - All 8 tools exposed and functional over stdio transport
-- [ ] **Phase 3: Container & Kubernetes** - Single Docker image deployable to Kubernetes
+- [x] **Phase 3: Container & Kubernetes** - Single Docker image deployable to Kubernetes (completed 2026-04-09)
 
 ## Phase Details
 
@@ -57,7 +57,10 @@ Plans:
   3. The server accepts MCP requests over HTTP/SSE transport when the container is started in HTTP mode
   4. kubectl apply of the provided manifests creates a running Pod with token from a Secret
   5. The health endpoint returns 200 OK and the liveness probe keeps the Pod alive under normal operation
-**Plans**: TBD
+**Plans:** 1/1 plans complete
+
+Plans:
+- [x] 03-01-PLAN.md — Entrypoint, health route, Dockerfile, and Kubernetes manifests
 
 ## Progress
 
@@ -68,4 +71,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. API Client | 1/1 | Complete   | 2026-04-09 |
 | 2. MCP Tools | 0/1 | Not started | - |
-| 3. Container & Kubernetes | 0/TBD | Not started | - |
+| 3. Container & Kubernetes | 1/1 | Complete   | 2026-04-09 |

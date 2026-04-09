@@ -25,11 +25,11 @@
 
 ### Container
 
-- [ ] **CONT-01**: Runs as MCP server over `stdio` transport (primary — for Claude Code / Claude Desktop)
-- [ ] **CONT-02**: Supports `streamable-http` transport for Kubernetes service exposure
-- [ ] **CONT-03**: Single `Dockerfile` builds a self-contained image (Python + all deps, no external volumes needed)
-- [ ] **CONT-04**: Kubernetes `Deployment` + `Service` YAML with token injected from a `Secret`
-- [ ] **CONT-05**: Health/liveness probe endpoint available when running in HTTP mode
+- [x] **CONT-01**: Runs as MCP server over `stdio` transport (primary — for Claude Code / Claude Desktop)
+- [x] **CONT-02**: Supports `streamable-http` transport for Kubernetes service exposure
+- [x] **CONT-03**: Single `Dockerfile` builds a self-contained image (Python + all deps, no external volumes needed)
+- [x] **CONT-04**: Kubernetes `Deployment` + `Service` YAML with token injected from a `Secret`
+- [x] **CONT-05**: Health/liveness probe endpoint available when running in HTTP mode
 
 ## v2 Requirements
 
@@ -70,11 +70,11 @@
 | TOOL-06 | Phase 2: MCP Tools | Complete |
 | TOOL-07 | Phase 2: MCP Tools | Complete |
 | TOOL-08 | Phase 2: MCP Tools | Complete |
-| CONT-01 | Phase 3: Container & Kubernetes | Pending |
-| CONT-02 | Phase 3: Container & Kubernetes | Pending |
-| CONT-03 | Phase 3: Container & Kubernetes | Pending |
-| CONT-04 | Phase 3: Container & Kubernetes | Pending |
-| CONT-05 | Phase 3: Container & Kubernetes | Pending |
+| CONT-01 | Phase 3: Container & Kubernetes | Complete |
+| CONT-02 | Phase 3: Container & Kubernetes | Complete |
+| CONT-03 | Phase 3: Container & Kubernetes | Complete |
+| CONT-04 | Phase 3: Container & Kubernetes | Complete |
+| CONT-05 | Phase 3: Container & Kubernetes | Complete |
 
 **Coverage:**
 - v1 requirements: 17 total
