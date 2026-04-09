@@ -113,9 +113,6 @@ Add to Claude Code with `--transport stdio` instead of `--transport http`.
 docker build -t plaud-mcp:latest .
 ```
 
-> **Note:** After the first push, the ghcr.io package defaults to private. To allow others to pull without authenticating:
-> GitHub → your profile → **Packages** → `plaud-mcp` → **Package settings** → **Change visibility → Public**.
-
 ## Stack
 
 - Python 3.10 + [FastMCP](https://github.com/jlowin/fastmcp)
