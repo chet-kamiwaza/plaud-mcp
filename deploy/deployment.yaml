@@ -1,0 +1,64 @@
+# deploy/deployment.yaml
+# Plaud MCP Server - Kubernetes Deployment
+#
+# Runs the server in HTTP transport mode (MCP_TRANSPORT=http).
+# Credentials are injected from the plaud-credentials Secret - see secret.yaml.
+#
+# Apply:  kubectl apply -f deploy/
+# Delete: kubectl delete -f deploy/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plaud-mcp
+  labels:
+    app: plaud-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plaud-mcp
+  template:
+    metadata:
+      labels:
+        app: plaud-mcp
+    spec:
+      # Security: T-03-02 - run as non-root UID 1000 (matches Dockerfile USER)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: plaud-mcp
+          image: plaud-mcp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: MCP_TRANSPORT
+              value: "http"
+          # Credentials injected from K8s Secret - never baked into image (T-03-01)
+          envFrom:
+            - secretRef:
+                name: plaud-credentials
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          # Liveness probe: CONT-05
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+      terminationGracePeriodSeconds: 30

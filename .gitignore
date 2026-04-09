@@ -27,6 +27,9 @@ htmlcov/
 .AppleDouble
 .LSOverride
 
+# Plaud MCP - never commit populated secrets
+deploy/secret.yaml
+
 # macOS app bundle (compiled artifacts from reverse engineering work)
 CodeResources
 Frameworks/

@@ -1,0 +1,21 @@
+# deploy/service.yaml
+# Plaud MCP Server - Kubernetes Service
+#
+# ClusterIP only - accessible within the cluster or via kubectl port-forward.
+# Security: T-03-04 - ClusterIP prevents direct external exposure.
+# External access: kubectl port-forward svc/plaud-mcp 8080:8080
+apiVersion: v1
+kind: Service
+metadata:
+  name: plaud-mcp
+  labels:
+    app: plaud-mcp
+spec:
+  type: ClusterIP
+  selector:
+    app: plaud-mcp
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
