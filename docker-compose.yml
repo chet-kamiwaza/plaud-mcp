@@ -1,0 +1,11 @@
+services:
+  plaud-mcp:
+    image: plaud-mcp:latest
+    container_name: plaud-mcp
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PLAUD_TOKEN=${PLAUD_TOKEN}
+      - PLAUD_DEVICE_ID=${PLAUD_DEVICE_ID}
+      - MCP_TRANSPORT=http

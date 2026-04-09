@@ -13,6 +13,9 @@ deploy/
 *.md
 .env
 .env.*
+.env.example
+scripts/
+docker-compose.yml
 *.egg-info/
 dist/
 build/

@@ -32,7 +32,7 @@ mcp = FastMCP("plaud")
 
 
 @mcp.custom_route("/health", methods=["GET"])
-async def health_check():
+async def health_check(request):
     """Health check endpoint for Kubernetes liveness probe (HTTP mode only)."""
     from starlette.responses import JSONResponse
     return JSONResponse({"status": "ok"})
@@ -47,7 +47,7 @@ async def check_connection() -> dict:
     """
     async with PlaudClient() as client:
         user_resp = await client.get("/user/me")
-        user_data = user_resp.get("data", {})
+        user_data = user_resp.get("data_user", {})
         count_resp = await client.get(
             "/file/simple/web",
             params={
@@ -58,12 +58,11 @@ async def check_connection() -> dict:
                 "is_desc": "true",
             },
         )
-        count_data = count_resp.get("data", {})
     return {
         "status": "connected",
-        "user_id": user_data.get("user_id"),
+        "user_id": user_data.get("id"),
         "email": user_data.get("email"),
-        "file_count": count_data.get("total", 0),
+        "file_count": count_resp.get("data_file_total", 0),
     }
 
 
@@ -84,7 +83,7 @@ async def get_file_count() -> dict:
                 "is_desc": "true",
             },
         )
-    return {"count": resp.get("data", {}).get("total", 0)}
+    return {"count": resp.get("data_file_total", 0)}
 
 
 @mcp.tool()
@@ -107,9 +106,9 @@ async def get_recent_files(days: int = 7) -> dict:
                 "is_desc": "true",
             },
         )
-    all_files = resp.get("data", {}).get("list", [])
+    all_files = resp.get("data_file_list", [])
     cutoff = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp()
-    files = [f for f in all_files if f.get("created_at", 0) >= cutoff]
+    files = [f for f in all_files if f.get("start_time", 0) >= cutoff]
     return {"files": files, "count": len(files), "days": days}
 
 
@@ -140,20 +139,20 @@ async def get_files(
                 "is_desc": "true",
             },
         )
-    files = resp.get("data", {}).get("list", [])
+    files = resp.get("data_file_list", [])
     if start_date is not None:
         start_ts = (
             datetime.strptime(start_date, "%Y-%m-%d")
             .replace(tzinfo=timezone.utc)
             .timestamp()
         )
-        files = [f for f in files if f.get("created_at", 0) >= start_ts]
+        files = [f for f in files if f.get("start_time", 0) >= start_ts]
     if end_date is not None:
         end_ts = (
             datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             + timedelta(days=1)
         ).timestamp()
-        files = [f for f in files if f.get("created_at", 0) < end_ts]
+        files = [f for f in files if f.get("start_time", 0) < end_ts]
     return {"files": files, "count": len(files)}
 
 
@@ -289,14 +288,14 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
                 "is_desc": "true",
             },
         )
-        all_files = resp.get("data", {}).get("list", [])
+        all_files = resp.get("data_file_list", [])
         cutoff = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp()
-        files = [f for f in all_files if f.get("created_at", 0) >= cutoff]
+        files = [f for f in all_files if f.get("start_time", 0) >= cutoff]
 
         matches = []
         for f in files:
             try:
-                detail_resp = await client.get(f"/file/detail/{f['file_id']}")
+                detail_resp = await client.get(f"/file/detail/{f['id']}")
                 detail = detail_resp.get("data", {})
                 content_item = next(
                     (
@@ -322,9 +321,9 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
                 snippet = full_text[max(0, idx - 50) : idx + len(query) + 150].strip()
                 matches.append(
                     {
-                        "file_id": f["file_id"],
-                        "title": f.get("title", ""),
-                        "created_at": f.get("created_at"),
+                        "file_id": f["id"],
+                        "title": f.get("filename", ""),
+                        "start_time": f.get("start_time"),
                         "snippet": snippet,
                     }
                 )

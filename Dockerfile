@@ -11,17 +11,11 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies first for layer cache efficiency.
+# Copy source and install.
 COPY pyproject.toml ./
+COPY src/ src/
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir .
-
-# Copy source after deps are cached.
-COPY src/ src/
-
-# Reinstall in editable mode so the package entry point resolves correctly.
-# (pip install . above installs deps; this step installs the package itself.)
-RUN pip install --no-cache-dir -e .
 
 # Default transport: stdio (for Claude Code / Claude Desktop).
 # Override at runtime with: -e MCP_TRANSPORT=http
