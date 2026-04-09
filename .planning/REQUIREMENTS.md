@@ -14,14 +14,14 @@
 
 ### MCP Tools
 
-- [ ] **TOOL-01**: `check_connection` — verifies token is valid and returns total file count
-- [ ] **TOOL-02**: `get_file_count` — returns total number of recordings in the account
-- [ ] **TOOL-03**: `get_recent_files(days)` — returns files created in the last N days
-- [ ] **TOOL-04**: `get_files(start_date, end_date, limit)` — returns files with optional date range filter
-- [ ] **TOOL-05**: `get_file(file_id)` — returns metadata for a specific recording
-- [ ] **TOOL-06**: `get_transcript(file_id)` — returns full transcript with speaker labels from the recording's signed S3 content URL
-- [ ] **TOOL-07**: `get_summary(file_id)` — returns AI-generated summary/notes from the recording's signed S3 content URL
-- [ ] **TOOL-08**: `search_transcripts(query, days)` — searches transcript content across recent files client-side
+- [x] **TOOL-01**: `check_connection` — verifies token is valid and returns total file count
+- [x] **TOOL-02**: `get_file_count` — returns total number of recordings in the account
+- [x] **TOOL-03**: `get_recent_files(days)` — returns files created in the last N days
+- [x] **TOOL-04**: `get_files(start_date, end_date, limit)` — returns files with optional date range filter
+- [x] **TOOL-05**: `get_file(file_id)` — returns metadata for a specific recording
+- [x] **TOOL-06**: `get_transcript(file_id)` — returns full transcript with speaker labels from the recording's signed S3 content URL
+- [x] **TOOL-07**: `get_summary(file_id)` — returns AI-generated summary/notes from the recording's signed S3 content URL
+- [x] **TOOL-08**: `search_transcripts(query, days)` — searches transcript content across recent files client-side
 
 ### Container
 
@@ -62,14 +62,14 @@
 | AUTH-02 | Phase 1: API Client | Complete |
 | AUTH-03 | Phase 1: API Client | Complete |
 | AUTH-04 | Phase 1: API Client | Complete |
-| TOOL-01 | Phase 2: MCP Tools | Pending |
-| TOOL-02 | Phase 2: MCP Tools | Pending |
-| TOOL-03 | Phase 2: MCP Tools | Pending |
-| TOOL-04 | Phase 2: MCP Tools | Pending |
-| TOOL-05 | Phase 2: MCP Tools | Pending |
-| TOOL-06 | Phase 2: MCP Tools | Pending |
-| TOOL-07 | Phase 2: MCP Tools | Pending |
-| TOOL-08 | Phase 2: MCP Tools | Pending |
+| TOOL-01 | Phase 2: MCP Tools | Complete |
+| TOOL-02 | Phase 2: MCP Tools | Complete |
+| TOOL-03 | Phase 2: MCP Tools | Complete |
+| TOOL-04 | Phase 2: MCP Tools | Complete |
+| TOOL-05 | Phase 2: MCP Tools | Complete |
+| TOOL-06 | Phase 2: MCP Tools | Complete |
+| TOOL-07 | Phase 2: MCP Tools | Complete |
+| TOOL-08 | Phase 2: MCP Tools | Complete |
 | CONT-01 | Phase 3: Container & Kubernetes | Pending |
 | CONT-02 | Phase 3: Container & Kubernetes | Pending |
 | CONT-03 | Phase 3: Container & Kubernetes | Pending |

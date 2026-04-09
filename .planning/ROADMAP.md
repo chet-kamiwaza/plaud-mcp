@@ -45,7 +45,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02-01-PLAN.md — All 8 MCP tools (server scaffold, file listing, content retrieval, unit tests)
+- [x] 02-01-PLAN.md — All 8 MCP tools (server scaffold, file listing, content retrieval, unit tests)
 
 ### Phase 3: Container & Kubernetes
 **Goal**: The MCP server runs inside a Docker container and deploys to Kubernetes with token injected from a Secret

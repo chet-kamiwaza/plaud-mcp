@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 1 (01-api-client) verified complete — ready to plan Phase 2
-last_updated: "2026-04-08T22:45:00Z"
-last_activity: 2026-04-08 — Phase 1 verified
+stopped_at: Completed 02-mcp-tools-01-PLAN.md
+last_updated: "2026-04-09T02:53:18.245Z"
+last_activity: 2026-04-08 — Phase 1 verified complete
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 33
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -52,6 +52,7 @@ Progress: [███░░░░░░░] 33%
 - Trend: Establishing baseline
 
 *Updated after each plan completion*
+| Phase 02-mcp-tools P01 | 3 min | 4 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 01-api-client]: Used pydantic-settings module-level Settings() for fail-fast startup validation (AUTH-01)
 - [Phase 01-api-client]: All six AUTH-02 headers set as AsyncClient defaults to prevent per-call omission; T-01-02 domain validation enforced on -302 redirect
 - [Phase 01-api-client]: Live smoke test deferred — no valid PLAUD_TOKEN available; unit tests provide full AUTH-01 through AUTH-04 coverage
+- [Phase 02-mcp-tools]: Per-request PlaudClient context manager (no singleton) to avoid state leakage between concurrent MCP calls
+- [Phase 02-mcp-tools]: asyncio.to_thread wraps sync _fetch_s3_content to avoid blocking the event loop during S3 HTTP fetch
+- [Phase 02-mcp-tools]: search_transcripts bounded to 50 files; S3 URLs sourced only from Plaud API content_list to prevent SSRF
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-08T22:45:00Z
-Stopped at: Phase 1 (01-api-client) verified complete — ready to plan Phase 2
+Last session: 2026-04-09T02:52:56.212Z
+Stopped at: Completed 02-mcp-tools-01-PLAN.md
 Resume file: None
