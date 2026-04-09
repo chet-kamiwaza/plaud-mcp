@@ -1,0 +1,19 @@
+# Development and test artifacts — excluded from Docker build context
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+tests/
+.planning/
+.git/
+.gitignore
+deploy/
+*.md
+.env
+.env.*
+*.egg-info/
+dist/
+build/
+.DS_Store
