@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-api-client-01-PLAN.md
-last_updated: "2026-04-09T02:31:56.768Z"
-last_activity: 2026-04-08 — Roadmap created
+stopped_at: Phase 1 (01-api-client) verified complete — ready to plan Phase 2
+last_updated: "2026-04-08T22:45:00Z"
+last_activity: 2026-04-08 — Phase 1 verified
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 1
   completed_plans: 1
-  percent: 100
+  percent: 33
 ---
 
 # Project State
@@ -21,38 +21,37 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** An MCP client can query a user's Plaud recordings, transcripts, and summaries via a self-hosted container using only an injected bearer token.
-**Current focus:** Phase 1 - API Client
+**Current focus:** Phase 2 - MCP Tools (Phase 1 complete)
 
 ## Current Position
 
-Phase: 1 of 3 (API Client)
+Phase: 2 of 3 (MCP Tools — not yet started)
 Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-04-08 — Roadmap created
+Status: Ready to plan Phase 2
+Last activity: 2026-04-08 — Phase 1 verified complete
 
-Progress: [██████████] 100%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 10 min
+- Total execution time: 0.17 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| Phase 01-api-client P01 | 10 | 3 tasks | 9 files |
 
 **Recent Trend:**
 
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 10 min
+- Trend: Establishing baseline
 
 *Updated after each plan completion*
-| Phase 01-api-client P01 | 10 | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -71,14 +70,16 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- AUTH risk: Reference impl README states direct HTTP clients return 401. This may be a missing-headers issue. Phase 1 must validate this before building any workarounds. Full required header set is known from reverse engineering.
+~~AUTH risk: Reference impl README states direct HTTP clients return 401. This may be a missing-headers issue. Phase 1 must validate this before building any workarounds. Full required header set is known from reverse engineering.~~
+
+**AUTH risk RESOLVED (unit-test level):** The full six-header set is implemented and all four AUTH requirements (AUTH-01 through AUTH-04) are verified by unit tests. Live API validation (whether the headers fully prevent 401s) remains an open empirical question until a valid PLAUD_TOKEN is available. No blocker for Phase 2 — MCP tools use the same PlaudClient.
 
 ## Session Continuity
 
-Last session: 2026-04-09T02:31:56.766Z
-Stopped at: Completed 01-api-client-01-PLAN.md
+Last session: 2026-04-08T22:45:00Z
+Stopped at: Phase 1 (01-api-client) verified complete — ready to plan Phase 2
 Resume file: None
