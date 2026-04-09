@@ -31,6 +31,13 @@ from .client import PlaudClient
 mcp = FastMCP("plaud")
 
 
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check():
+    """Health check endpoint for Kubernetes liveness probe (HTTP mode only)."""
+    from starlette.responses import JSONResponse
+    return JSONResponse({"status": "ok"})
+
+
 @mcp.tool()
 async def check_connection() -> dict:
     """Verify the Plaud token is valid and return total file count.
@@ -324,6 +331,3 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
 
     return {"query": query, "days": days, "matches": matches, "match_count": len(matches)}
 
-
-if __name__ == "__main__":
-    mcp.run(transport="stdio")
