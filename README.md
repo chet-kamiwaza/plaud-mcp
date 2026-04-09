@@ -17,6 +17,20 @@ Eight tools available to Claude once connected:
 | `get_summary` | AI-generated summary |
 | `search_transcripts` | Search across recent transcripts |
 
+## Quick start
+
+```bash
+git clone https://github.com/chet-kamiwaza/plaud-mcp
+cd plaud-mcp
+pip install cryptography
+python scripts/get-token.py   # prints your PLAUD_TOKEN + PLAUD_DEVICE_ID
+cp .env.example .env          # edit .env with the values above
+docker compose up -d
+claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
+```
+
+Open a new Claude Code session — the Plaud tools are ready.
+
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
@@ -98,6 +112,17 @@ Add to Claude Code with `--transport stdio` instead of `--transport http`.
 ```bash
 docker build -t plaud-mcp:latest .
 ```
+
+## Publishing a new image version
+
+```bash
+docker build -t ghcr.io/chet-kamiwaza/plaud-mcp:latest -t ghcr.io/chet-kamiwaza/plaud-mcp:vX.Y .
+docker push ghcr.io/chet-kamiwaza/plaud-mcp:latest
+docker push ghcr.io/chet-kamiwaza/plaud-mcp:vX.Y
+```
+
+> **Note:** After the first push, the ghcr.io package defaults to private. To allow others to pull without authenticating:
+> GitHub → your profile → **Packages** → `plaud-mcp` → **Package settings** → **Change visibility → Public**.
 
 ## Stack
 
