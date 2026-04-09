@@ -55,7 +55,7 @@ PLAUD_DEVICE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 docker compose up -d
 ```
 
-The container will start automatically whenever Docker Desktop starts (`restart: unless-stopped`).
+The `docker-compose.yml` pulls the pre-built image from `ghcr.io/chet-kamiwaza/plaud-mcp:latest` automatically. The container will restart whenever Docker Desktop starts (`restart: unless-stopped`).
 
 ### 4. Connect to Claude Code
 

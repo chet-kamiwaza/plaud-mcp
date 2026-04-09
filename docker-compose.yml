@@ -1,6 +1,6 @@
 services:
   plaud-mcp:
-    image: plaud-mcp:latest
+    image: ghcr.io/chet-kamiwaza/plaud-mcp:latest
     container_name: plaud-mcp
     restart: unless-stopped
     ports:
