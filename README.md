@@ -113,14 +113,6 @@ Add to Claude Code with `--transport stdio` instead of `--transport http`.
 docker build -t plaud-mcp:latest .
 ```
 
-## Publishing a new image version
-
-```bash
-docker build -t ghcr.io/chet-kamiwaza/plaud-mcp:latest -t ghcr.io/chet-kamiwaza/plaud-mcp:vX.Y .
-docker push ghcr.io/chet-kamiwaza/plaud-mcp:latest
-docker push ghcr.io/chet-kamiwaza/plaud-mcp:vX.Y
-```
-
 > **Note:** After the first push, the ghcr.io package defaults to private. To allow others to pull without authenticating:
 > GitHub → your profile → **Packages** → `plaud-mcp` → **Package settings** → **Change visibility → Public**.
 
