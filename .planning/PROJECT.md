@@ -1,12 +1,12 @@
-# Plaud Linux Client
+# Plaud MCP Server
 
 ## What This Is
 
-A custom Linux desktop client for the Plaud AI cloud service. It authenticates with Plaud's cloud API, then lets users browse and view their past recordings, transcripts, and AI-generated summaries. Built for Linux users who have Plaud recordings in the cloud but no native Linux app to access them.
+A containerized MCP (Model Context Protocol) server that exposes Plaud cloud API data as tools for AI assistants. Deployed as a single Docker container on Kubernetes, it gives Claude and other MCP clients access to a user's Plaud recordings, transcripts, and AI summaries — with no Desktop app dependency.
 
 ## Core Value
 
-A Linux user can log into their Plaud account and read their recordings, transcripts, and AI summaries.
+An MCP client can query a user's Plaud recordings, transcripts, and summaries via a self-hosted container using only an injected bearer token.
 
 ## Requirements
 
@@ -16,66 +16,77 @@ A Linux user can log into their Plaud account and read their recordings, transcr
 
 ### Active
 
-- [ ] User can authenticate with the Plaud cloud service on Linux
-- [ ] User can view their list of past recordings
-- [ ] User can view transcripts for individual recordings
-- [ ] User can view AI-generated summaries/notes for recordings
-- [ ] Session persists across app restarts (token stored locally)
-- [ ] User can log out
+- [ ] MCP server exposes tools: check_connection, get_file_count, get_recent_files, get_files, get_file, get_transcript, get_summary, search_transcripts
+- [ ] Auth via bearer token injected as environment variable (PLAUD_TOKEN)
+- [ ] Device UUID injected as environment variable (PLAUD_DEVICE_ID) — required by Plaud API
+- [ ] All required Plaud API headers sent on every request (Authorization, X-Device-Id, edit-from, app-platform, app-versionNumber, app-language)
+- [ ] Handles Plaud -302 domain redirect (updates base URL and retries)
+- [ ] Handles -10000 auth error (surfaces clear error to MCP client)
+- [ ] Runs as MCP server over stdio transport (for Claude Code / Claude Desktop integration)
+- [ ] Also supports HTTP/SSE transport for Kubernetes service exposure
+- [ ] Packages cleanly as a single Docker image with all dependencies
+- [ ] Kubernetes-deployable: env var config, health endpoint, liveness probe
 
 ### Out of Scope
 
-- Audio recording functionality — macOS-specific native modules; not the goal
-- System audio capture — macOS TCC + Core Audio, no Linux port planned
-- Meeting auto-detection — requires audio_monitor native module, not needed
-- macOS/Windows builds — building for Linux only
-- Uploading recordings — no recording functionality means no upload needed
+- CDP / Plaud Desktop dependency — requires Desktop app running; unusable in containers
+- Official developer API (platform.plaud.cn) — user has personal account only, no client credentials
+- Token refresh / OAuth flow — token injected manually; expiry handled by re-injecting
+- Audio recording or upload — cloud read-only client
+- macOS / Windows deployment targets
 
 ## Context
 
-**Source analysis:** Reverse-engineered from the compiled macOS Plaud Electron app (v1.0.5, `ai.plaud.desktop.plaud`). Source maps in the ASAR bundle allowed full TypeScript recovery (263 files, 729KB source). Extracted source lives in `/tmp/plaud-src/`.
+**What Plaud is:** Electron desktop app for the Plaud AI transcription service (`ai.plaud.desktop.plaud`, v1.0.5). Users record with Plaud hardware devices; recordings, transcripts, and AI summaries live in Plaud's cloud.
 
-**API:** Base URL `https://api.plaud.ai`. All requests require:
-- `Authorization: bearer <token>`
-- `edit-from: desktop`
-- `app-platform: desktop`
-- `app-versionNumber: <semver>`
-- `app-language: <lang-code>` (e.g. `en-US`)
-- `X-Device-Id: <device-uuid>`
+**Source analysis:** Reverse-engineered from compiled macOS app bundle. Source maps recovered 263 TypeScript files (729KB). API client code fully understood. Extracted source in `/tmp/plaud-src/`.
 
-Domain can change dynamically — API returns status `-302` with a new domain when a redirect is needed.
+**Reference implementation:** `github.com/davidlinjiahao/plaud-mcp` — uses Chrome DevTools Protocol (CDP) to piggyback on the running Desktop app's authenticated session. Works locally on macOS; fundamentally incompatible with container deployment (requires `pgrep "Plaud.app/Contents/MacOS/Plaud"` + `SIGUSR1`).
 
-**Auth flow:** Browser opens `https://web.plaud.ai/` → web app redirects to `plaud://auth?auth_code=<code>` → desktop app intercepts the URL scheme → `POST /auth/access-token-auth-code` with `{ client_id: "desktop", auth_code, desktop_uuid }` → receives `access_token` → stored as `bearer <token>`.
+**API:** Base URL `https://api.plaud.ai`. Required headers on every request:
+```
+Authorization: bearer <token>
+edit-from: desktop
+app-platform: desktop
+app-versionNumber: 1.0.5
+app-language: en-US
+X-Device-Id: <device-uuid>
+```
 
-**Known API endpoints:**
+**Auth warning:** The reference repo's README states direct HTTP clients (httpx, curl, curl_cffi) return 401. This may be due to missing required headers rather than true Chromium-level validation. Must validate with the full header set before concluding a workaround is needed.
+
+**Known API endpoints (from source):**
+- `GET /file/simple/web?skip=&limit=&is_trash=2&sort_by=start_time&is_desc=true` — list files
+- `GET /file/detail/{file_id}` — file detail + content_list (transcripts, summaries as signed S3 URLs)
 - `POST /auth/access-token-auth-code` — exchange auth code for token
 - `POST /auth/access-token-logout` — invalidate token
-- `GET /user/me` — user profile + membership type
-- `GET /user/workflows` — user AutoFlow workflow configurations
+- `GET /user/me` — user profile
 
-**Content location:** All recordings, transcripts, and summaries live at `https://web.plaud.ai/file/<fileId>`. The macOS desktop app opens that URL in the system browser when the user clicks "View Notes."
+**Content retrieval:** File details include `content_list[]` with `data_type` and `data_link` (signed S3 URL). Transcripts are `data_type: "transaction"`, summaries are `data_type: "auto_sum_note"`. Content is gzip-compressed JSON at the S3 URL.
 
 **Status codes:**
 - `0` — success
-- `-10000` — auth error (token invalid/expired)
-- `-302` — domain change (update base URL and retry)
-- `-9999` — application error with user-visible alert message
+- `-10000` — auth invalid/expired → surface as auth error
+- `-302` — domain redirect → update base URL, retry
+- `-9999` — application error with `data.alert` message
 
-**Linux URL scheme registration:** Unlike macOS (NSApp URL scheme), Linux requires `xdg-mime` / `.desktop` file registration for `plaud://` protocol handling.
+**Token extraction (for K8s secret injection):** Token likely in `~/Library/Application Support/Plaud/config.json` (electron-store). Device UUID in the same store or derivable from system hardware UUID.
 
 ## Constraints
 
-- **API**: Must use `https://api.plaud.ai` — no public API docs; derived from reverse engineering
-- **Auth**: Must implement the `plaud://` OAuth callback protocol on Linux
-- **Platform**: Linux-first; macOS/Windows not targeted in this milestone
+- **API**: `https://api.plaud.ai` — no public docs; all knowledge from reverse engineering
+- **Auth**: Bearer token + device UUID must be injected; no interactive login flow in container
+- **Stack**: Python (matches reference impl, `mcp` SDK has excellent Python support)
+- **Container**: Single image, no sidecar, no external state store
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Custom API client (not thin Electron shell) | More control, lighter, no macOS recording code baggage | — Pending |
-| Reuse extracted TypeScript API client code | Already battle-tested, same auth/fetch logic | — Pending |
-| Stack TBD (Electron vs Tauri vs CLI) | Research needed to pick best fit for Linux desktop | — Pending |
+| Rewrite (not fork) reference impl | CDP approach fundamentally incompatible with containers | — Pending |
+| Python + FastMCP | MCP SDK is excellent in Python; matches reference impl stack | — Pending |
+| Token injection via env var | Simplest K8s-compatible auth; token as K8s Secret | — Pending |
+| Validate direct HTTP first | 401 claim may be a header issue; must test before building workarounds | — Pending |
 
 ## Evolution
 
@@ -95,4 +106,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 after initialization*
+*Last updated: 2026-04-08 after scope pivot to MCP server + container deployment*
