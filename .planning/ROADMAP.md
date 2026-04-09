@@ -42,8 +42,10 @@ Plans:
   3. get_transcript returns a readable transcript with speaker labels for a given file_id
   4. get_summary returns the AI-generated summary text for a given file_id
   5. search_transcripts returns matching files when given a query term present in recent transcripts
-**Plans**: TBD
-**UI hint**: no
+**Plans**: 1 plan
+
+Plans:
+- [ ] 02-01-PLAN.md — All 8 MCP tools (server scaffold, file listing, content retrieval, unit tests)
 
 ### Phase 3: Container & Kubernetes
 **Goal**: The MCP server runs inside a Docker container and deploys to Kubernetes with token injected from a Secret
@@ -65,5 +67,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. API Client | 1/1 | Complete   | 2026-04-09 |
-| 2. MCP Tools | 0/TBD | Not started | - |
+| 2. MCP Tools | 0/1 | Not started | - |
 | 3. Container & Kubernetes | 0/TBD | Not started | - |
