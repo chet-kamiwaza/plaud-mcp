@@ -225,7 +225,7 @@ _SEARCH_MAX_FILES = 100
 async def search_transcripts(query: str, days: int = 30) -> dict:
     """Search transcript content across recent files (client-side).
 
-    Fetches files within the given day window (up to 200 most recent),
+    Fetches files within the given day window (up to 100 most recent),
     downloads each transcript, and performs a case-insensitive substring
     match. Files with no transcript or fetch errors are silently skipped.
 
