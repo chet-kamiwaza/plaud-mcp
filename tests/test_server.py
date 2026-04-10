@@ -4,7 +4,7 @@ Unit tests for all 8 Plaud MCP tools in plaud_mcp.server.
 Mocking strategy:
   - PlaudClient is patched at "plaud_mcp.server.PlaudClient" so that
     `async with PlaudClient() as client:` yields a MagicMock whose .get
-    is an AsyncMock.
+    and .get_all_files are AsyncMocks.
   - _fetch_s3_content (sync, called via asyncio.to_thread) is tested by
     patching "plaud_mcp.server.asyncio" so that asyncio.to_thread becomes
     an AsyncMock returning fixture content directly.
@@ -19,20 +19,32 @@ import pytest
 # Helper
 # ---------------------------------------------------------------------------
 
-def make_mock_client(*side_effects):
-    """Return a mock PlaudClient context manager whose .get returns given values.
+def make_mock_client(get_side_effects=None, all_files=None):
+    """Return a mock PlaudClient context manager.
 
-    If one value is provided, .get always returns it.
-    If multiple values are provided, .get returns them in sequence.
+    Args:
+        get_side_effects: Value(s) for .get(). Single value or list for sequence.
+        all_files: Return value for .get_all_files() — a list of file dicts.
     """
     mock_client = MagicMock()
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
-    if len(side_effects) == 1:
-        mock_client.get = AsyncMock(return_value=side_effects[0])
+
+    if get_side_effects is not None:
+        if isinstance(get_side_effects, list):
+            mock_client.get = AsyncMock(side_effect=get_side_effects)
+        else:
+            mock_client.get = AsyncMock(return_value=get_side_effects)
     else:
-        mock_client.get = AsyncMock(side_effect=list(side_effects))
+        mock_client.get = AsyncMock(return_value={"status": 0, "data": {}})
+
+    mock_client.get_all_files = AsyncMock(return_value=all_files or [])
     return mock_client
+
+
+def _ms(seconds_ago):
+    """Return a start_time in milliseconds for N seconds ago."""
+    return int((time.time() - seconds_ago) * 1000)
 
 
 # ---------------------------------------------------------------------------
@@ -43,13 +55,10 @@ class TestCheckConnection:
     async def test_returns_connected_status_and_file_count(self):
         user_resp = {
             "status": 0,
-            "data": {"user_id": "user-001", "email": "user@example.com"},
+            "data_user": {"id": "user-001", "email": "user@example.com"},
         }
-        count_resp = {
-            "status": 0,
-            "data": {"list": [], "total": 42},
-        }
-        mock_client = make_mock_client(user_resp, count_resp)
+        files = [{"id": f"f{i}"} for i in range(42)]
+        mock_client = make_mock_client(get_side_effects=user_resp, all_files=files)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import check_connection
@@ -79,9 +88,9 @@ class TestCheckConnection:
 # ---------------------------------------------------------------------------
 
 class TestGetFileCount:
-    async def test_returns_count_from_total(self):
-        resp = {"status": 0, "data": {"list": [], "total": 17}}
-        mock_client = make_mock_client(resp)
+    async def test_returns_count_from_all_files(self):
+        files = [{"id": f"f{i}"} for i in range(17)]
+        mock_client = make_mock_client(all_files=files)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_file_count
@@ -89,9 +98,8 @@ class TestGetFileCount:
 
         assert result == {"count": 17}
 
-    async def test_returns_zero_when_total_missing(self):
-        resp = {"status": 0, "data": {}}
-        mock_client = make_mock_client(resp)
+    async def test_returns_zero_when_no_files(self):
+        mock_client = make_mock_client(all_files=[])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_file_count
@@ -106,12 +114,10 @@ class TestGetFileCount:
 
 class TestGetRecentFiles:
     async def test_filters_by_days(self):
-        now = time.time()
-        recent = {"file_id": "f1", "title": "Recent", "created_at": int(now - 86400)}      # 1 day ago
-        old = {"file_id": "f2", "title": "Old", "created_at": int(now - 10 * 86400)}        # 10 days ago
+        recent = {"id": "f1", "filename": "Recent", "start_time": _ms(86400)}       # 1 day ago
+        old = {"id": "f2", "filename": "Old", "start_time": _ms(10 * 86400)}        # 10 days ago
 
-        resp = {"status": 0, "data": {"list": [recent, old], "total": 2}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(all_files=[recent, old])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_recent_files
@@ -119,15 +125,13 @@ class TestGetRecentFiles:
 
         assert result["count"] == 1
         assert result["days"] == 7
-        assert result["files"][0]["file_id"] == "f1"
+        assert result["files"][0]["id"] == "f1"
 
     async def test_returns_all_within_window(self):
-        now = time.time()
-        file1 = {"file_id": "a1", "created_at": int(now - 100)}
-        file2 = {"file_id": "a2", "created_at": int(now - 3600)}
+        file1 = {"id": "a1", "start_time": _ms(100)}
+        file2 = {"id": "a2", "start_time": _ms(3600)}
 
-        resp = {"status": 0, "data": {"list": [file1, file2], "total": 2}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(all_files=[file1, file2])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_recent_files
@@ -137,11 +141,9 @@ class TestGetRecentFiles:
         assert len(result["files"]) == 2
 
     async def test_returns_empty_when_no_recent_files(self):
-        now = time.time()
-        old = {"file_id": "old", "created_at": int(now - 30 * 86400)}
+        old = {"id": "old", "start_time": _ms(30 * 86400)}
 
-        resp = {"status": 0, "data": {"list": [old], "total": 1}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(all_files=[old])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_recent_files
@@ -158,64 +160,55 @@ class TestGetRecentFiles:
 class TestGetFiles:
     async def test_no_filter_returns_all(self):
         files = [
-            {"file_id": "x1", "created_at": 1712000000},
-            {"file_id": "x2", "created_at": 1712100000},
+            {"id": "x1", "start_time": 1712000000000},
+            {"id": "x2", "start_time": 1712100000000},
         ]
-        resp = {"status": 0, "data": {"list": files, "total": 2}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(all_files=files)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
-            result = await get_files()
+            result = await get_files(limit=0)
 
         assert result["count"] == 2
         assert len(result["files"]) == 2
 
     async def test_start_date_filters(self):
-        # start_date 2024-04-01 UTC = 1711929600
-        before = {"file_id": "b1", "created_at": 1711800000}  # before 2024-04-01
-        after = {"file_id": "b2", "created_at": 1712000000}   # after 2024-04-01
+        # start_date 2024-04-01 UTC = 1711929600 seconds = 1711929600000 ms
+        before = {"id": "b1", "start_time": 1711800000000}  # before 2024-04-01
+        after = {"id": "b2", "start_time": 1712000000000}   # after 2024-04-01
 
-        resp = {"status": 0, "data": {"list": [before, after], "total": 2}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(all_files=[before, after])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
-            result = await get_files(start_date="2024-04-01")
+            result = await get_files(start_date="2024-04-01", limit=0)
 
         assert result["count"] == 1
-        assert result["files"][0]["file_id"] == "b2"
+        assert result["files"][0]["id"] == "b2"
 
     async def test_end_date_filters(self):
-        # end_date 2024-04-01 UTC: anything before 2024-04-02 00:00:00 = 1712016000 passes
-        early = {"file_id": "e1", "created_at": 1711900000}   # before 2024-04-02 00:00 UTC
-        late = {"file_id": "e2", "created_at": 1712100000}    # after 2024-04-02 00:00 UTC
+        # end_date 2024-04-01 UTC: anything before 2024-04-02 00:00:00 = 1712016000000 ms passes
+        early = {"id": "e1", "start_time": 1711900000000}   # before 2024-04-02 00:00 UTC
+        late = {"id": "e2", "start_time": 1712100000000}    # after 2024-04-02 00:00 UTC
 
-        resp = {"status": 0, "data": {"list": [early, late], "total": 2}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(all_files=[early, late])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
-            result = await get_files(end_date="2024-04-01")
+            result = await get_files(end_date="2024-04-01", limit=0)
 
         assert result["count"] == 1
-        assert result["files"][0]["file_id"] == "e1"
+        assert result["files"][0]["id"] == "e1"
 
-    async def test_limit_clamped_to_200(self):
-        """Verify that limit > 200 is silently clamped to 200 in the API call."""
-        resp = {"status": 0, "data": {"list": [], "total": 0}}
-        mock_client = make_mock_client(resp)
+    async def test_default_limit_applied(self):
+        files = [{"id": f"f{i}", "start_time": _ms(i * 100)} for i in range(100)]
+        mock_client = make_mock_client(all_files=files)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
-            result = await get_files(limit=999)
+            result = await get_files()
 
-        # Verify the API was called with limit=200 (clamped)
-        call_kwargs = mock_client.get.call_args
-        params = call_kwargs[1].get("params", call_kwargs[0][1] if len(call_kwargs[0]) > 1 else {})
-        # params dict passed as keyword arg
-        assert params["limit"] == 200
-        assert result["count"] == 0
+        assert result["count"] == 50  # default limit
 
 
 # ---------------------------------------------------------------------------
@@ -230,7 +223,7 @@ class TestGetFile:
             "content_list": [],
         }
         resp = {"status": 0, "data": detail_data}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(get_side_effects=resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_file
@@ -253,7 +246,7 @@ class TestGetFile:
 
     async def test_strips_whitespace_from_file_id(self):
         resp = {"status": 0, "data": {"file_id": "abc123"}}
-        mock_client = make_mock_client(resp)
+        mock_client = make_mock_client(get_side_effects=resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_file
@@ -289,7 +282,7 @@ class TestGetTranscript:
                 ],
             },
         }
-        mock_client = make_mock_client(detail_resp)
+        mock_client = make_mock_client(get_side_effects=detail_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -311,7 +304,7 @@ class TestGetTranscript:
                 ],
             },
         }
-        mock_client = make_mock_client(detail_resp)
+        mock_client = make_mock_client(get_side_effects=detail_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_transcript
@@ -329,7 +322,7 @@ class TestGetTranscript:
             "status": 0,
             "data": {"file_id": "empty", "content_list": []},
         }
-        mock_client = make_mock_client(detail_resp)
+        mock_client = make_mock_client(get_side_effects=detail_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_transcript
@@ -352,7 +345,7 @@ class TestGetTranscript:
                 ],
             },
         }
-        mock_client = make_mock_client(detail_resp)
+        mock_client = make_mock_client(get_side_effects=detail_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -382,7 +375,7 @@ class TestGetSummary:
                 ],
             },
         }
-        mock_client = make_mock_client(detail_resp)
+        mock_client = make_mock_client(get_side_effects=detail_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -403,7 +396,7 @@ class TestGetSummary:
                 ],
             },
         }
-        mock_client = make_mock_client(detail_resp)
+        mock_client = make_mock_client(get_side_effects=detail_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_summary
@@ -423,15 +416,10 @@ class TestGetSummary:
 
 class TestSearchTranscripts:
     async def test_finds_matching_file(self):
-        now = time.time()
         file_in_window = {
-            "file_id": "match1",
-            "title": "Sales Call",
-            "created_at": int(now - 86400),  # 1 day ago — within 30-day window
-        }
-        list_resp = {
-            "status": 0,
-            "data": {"list": [file_in_window], "total": 1},
+            "id": "match1",
+            "filename": "Sales Call",
+            "start_time": _ms(86400),  # 1 day ago — within 30-day window
         }
         detail_resp = {
             "status": 0,
@@ -448,7 +436,10 @@ class TestSearchTranscripts:
                 {"speaker": "Bob", "text": "The budget looks good"},
             ]
         }
-        mock_client = make_mock_client(list_resp, detail_resp)
+        mock_client = make_mock_client(
+            get_side_effects=detail_resp,
+            all_files=[file_in_window],
+        )
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -461,17 +452,13 @@ class TestSearchTranscripts:
         assert result["matches"][0]["file_id"] == "match1"
         assert result["matches"][0]["title"] == "Sales Call"
         assert "budget" in result["matches"][0]["snippet"].lower()
+        assert result["files_searched"] == 1
 
     async def test_no_matches_returns_empty(self):
-        now = time.time()
         file_in_window = {
-            "file_id": "nomatch",
-            "title": "Unrelated",
-            "created_at": int(now - 3600),
-        }
-        list_resp = {
-            "status": 0,
-            "data": {"list": [file_in_window], "total": 1},
+            "id": "nomatch",
+            "filename": "Unrelated",
+            "start_time": _ms(3600),
         }
         detail_resp = {
             "status": 0,
@@ -485,7 +472,10 @@ class TestSearchTranscripts:
         transcript_data = {
             "list": [{"speaker": "X", "text": "Hello world how are you"}]
         }
-        mock_client = make_mock_client(list_resp, detail_resp)
+        mock_client = make_mock_client(
+            get_side_effects=detail_resp,
+            all_files=[file_in_window],
+        )
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -509,17 +499,12 @@ class TestSearchTranscripts:
                 await search_transcripts("   ")
 
     async def test_files_outside_days_excluded(self):
-        now = time.time()
         old_file = {
-            "file_id": "old1",
-            "title": "Old Recording",
-            "created_at": int(now - 60 * 86400),  # 60 days ago — outside 30-day window
+            "id": "old1",
+            "filename": "Old Recording",
+            "start_time": _ms(60 * 86400),  # 60 days ago — outside 30-day window
         }
-        list_resp = {
-            "status": 0,
-            "data": {"list": [old_file], "total": 1},
-        }
-        mock_client = make_mock_client(list_resp)
+        mock_client = make_mock_client(all_files=[old_file])
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -532,15 +517,10 @@ class TestSearchTranscripts:
         assert result["match_count"] == 0
 
     async def test_file_without_transcript_skipped(self):
-        now = time.time()
         file_no_transcript = {
-            "file_id": "notr",
-            "title": "No transcript",
-            "created_at": int(now - 3600),
-        }
-        list_resp = {
-            "status": 0,
-            "data": {"list": [file_no_transcript], "total": 1},
+            "id": "notr",
+            "filename": "No transcript",
+            "start_time": _ms(3600),
         }
         detail_resp = {
             "status": 0,
@@ -551,7 +531,10 @@ class TestSearchTranscripts:
                 ],
             },
         }
-        mock_client = make_mock_client(list_resp, detail_resp)
+        mock_client = make_mock_client(
+            get_side_effects=detail_resp,
+            all_files=[file_no_transcript],
+        )
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
              patch("plaud_mcp.server.asyncio") as mock_asyncio:
@@ -565,20 +548,15 @@ class TestSearchTranscripts:
 
     async def test_file_fetch_error_skipped(self):
         """Files that raise an exception during detail fetch are silently skipped."""
-        now = time.time()
         bad_file = {
-            "file_id": "err1",
-            "title": "Error file",
-            "created_at": int(now - 3600),
+            "id": "err1",
+            "filename": "Error file",
+            "start_time": _ms(3600),
         }
         good_file = {
-            "file_id": "good1",
-            "title": "Good file",
-            "created_at": int(now - 7200),
-        }
-        list_resp = {
-            "status": 0,
-            "data": {"list": [bad_file, good_file], "total": 2},
+            "id": "good1",
+            "filename": "Good file",
+            "start_time": _ms(7200),
         }
         good_detail_resp = {
             "status": 0,
@@ -594,8 +572,9 @@ class TestSearchTranscripts:
         mock_client = MagicMock()
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.get_all_files = AsyncMock(return_value=[bad_file, good_file])
         mock_client.get = AsyncMock(
-            side_effect=[list_resp, PlaudAPIError("fetch failed"), good_detail_resp]
+            side_effect=[PlaudAPIError("fetch failed"), good_detail_resp]
         )
 
         transcript_data = {"list": [{"speaker": "A", "text": "target keyword found here"}]}
