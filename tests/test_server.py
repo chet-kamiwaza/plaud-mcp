@@ -52,13 +52,12 @@ def _ms(seconds_ago):
 # ---------------------------------------------------------------------------
 
 class TestCheckConnection:
-    async def test_returns_connected_status_and_file_count(self):
+    async def test_returns_connected_status(self):
         user_resp = {
             "status": 0,
             "data_user": {"id": "user-001", "email": "user@example.com"},
         }
-        files = [{"id": f"f{i}"} for i in range(42)]
-        mock_client = make_mock_client(get_side_effects=user_resp, all_files=files)
+        mock_client = make_mock_client(get_side_effects=user_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import check_connection
@@ -67,7 +66,7 @@ class TestCheckConnection:
         assert result["status"] == "connected"
         assert result["user_id"] == "user-001"
         assert result["email"] == "user@example.com"
-        assert result["file_count"] == 42
+        assert "file_count" not in result
 
     async def test_auth_error_propagates(self):
         from plaud_mcp.errors import PlaudAuthError

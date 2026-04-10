@@ -47,12 +47,10 @@ async def check_connection() -> dict:
     async with PlaudClient() as client:
         user_resp = await client.get("/user/me")
         user_data = user_resp.get("data_user", {})
-        all_files = await client.get_all_files()
     return {
         "status": "connected",
         "user_id": user_data.get("id"),
         "email": user_data.get("email"),
-        "file_count": len(all_files),
     }
 
 
@@ -220,13 +218,16 @@ async def get_summary(file_id: str) -> dict:
     return {"file_id": file_id, "summary": summary_data}
 
 
+_SEARCH_MAX_FILES = 100
+
+
 @mcp.tool()
 async def search_transcripts(query: str, days: int = 30) -> dict:
-    """Search transcript content across files (client-side).
+    """Search transcript content across recent files (client-side).
 
-    Fetches all files within the given day window, downloads each
-    transcript, and performs a case-insensitive substring match. Files with
-    no transcript or fetch errors are silently skipped.
+    Fetches files within the given day window (up to 200 most recent),
+    downloads each transcript, and performs a case-insensitive substring
+    match. Files with no transcript or fetch errors are silently skipped.
 
     Args:
         query: Search term (non-empty string).
@@ -241,6 +242,7 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
         all_files = await client.get_all_files()
         cutoff_ms = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp() * 1000
         files = [f for f in all_files if f.get("start_time", 0) >= cutoff_ms]
+        files = files[:_SEARCH_MAX_FILES]
 
         matches = []
         for f in files:

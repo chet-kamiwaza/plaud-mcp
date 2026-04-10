@@ -174,3 +174,96 @@ class TestUnknownError:
         async with PlaudClient() as client:
             with pytest.raises(PlaudAPIError):
                 await client.get("/user/current")
+
+
+# ---------------------------------------------------------------------------
+# get_all_files pagination
+# ---------------------------------------------------------------------------
+
+class TestGetAllFiles:
+    """Tests for the get_all_files pagination helper."""
+
+    @respx.mock
+    async def test_single_page(self):
+        """Account with fewer files than page_size returns in one call."""
+        files = [{"id": f"f{i}"} for i in range(3)]
+        respx.get("https://api.plaud.ai/file/simple/web").mock(
+            return_value=httpx.Response(
+                200, json={"status": 0, "data_file_total": 3, "data_file_list": files}
+            )
+        )
+
+        async with PlaudClient() as client:
+            result = await client.get_all_files(page_size=200)
+
+        assert len(result) == 3
+        assert result[0]["id"] == "f0"
+
+    @respx.mock
+    async def test_multiple_pages(self):
+        """Paginates until a partial page is returned."""
+        page1 = [{"id": f"p1-{i}"} for i in range(3)]
+        page2 = [{"id": f"p2-{i}"} for i in range(2)]  # partial → last page
+
+        respx.get("https://api.plaud.ai/file/simple/web").mock(
+            side_effect=[
+                httpx.Response(
+                    200, json={"status": 0, "data_file_total": 3, "data_file_list": page1}
+                ),
+                httpx.Response(
+                    200, json={"status": 0, "data_file_total": 2, "data_file_list": page2}
+                ),
+            ]
+        )
+
+        async with PlaudClient() as client:
+            result = await client.get_all_files(page_size=3)
+
+        assert len(result) == 5
+        assert result[0]["id"] == "p1-0"
+        assert result[3]["id"] == "p2-0"
+
+    @respx.mock
+    async def test_empty_account(self):
+        """Account with no files returns empty list."""
+        respx.get("https://api.plaud.ai/file/simple/web").mock(
+            return_value=httpx.Response(
+                200, json={"status": 0, "data_file_total": 0, "data_file_list": []}
+            )
+        )
+
+        async with PlaudClient() as client:
+            result = await client.get_all_files()
+
+        assert result == []
+
+    @respx.mock
+    async def test_max_pages_safety_limit(self):
+        """Stops after max_pages even if every page is full."""
+        full_page = [{"id": f"f{i}"} for i in range(5)]
+        respx.get("https://api.plaud.ai/file/simple/web").mock(
+            return_value=httpx.Response(
+                200, json={"status": 0, "data_file_total": 5, "data_file_list": full_page}
+            )
+        )
+
+        async with PlaudClient() as client:
+            result = await client.get_all_files(page_size=5, max_pages=3)
+
+        # 3 pages × 5 files = 15 files, then stops
+        assert len(result) == 15
+
+    @respx.mock
+    async def test_page_size_clamped_to_200(self):
+        """page_size > 200 is clamped to 200."""
+        respx.get("https://api.plaud.ai/file/simple/web").mock(
+            return_value=httpx.Response(
+                200, json={"status": 0, "data_file_total": 0, "data_file_list": []}
+            )
+        )
+
+        async with PlaudClient() as client:
+            await client.get_all_files(page_size=999)
+
+        request = respx.calls[0].request
+        assert "limit=200" in str(request.url)
