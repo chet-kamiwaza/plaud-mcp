@@ -55,10 +55,12 @@ async def check_connection() -> dict:
     async with PlaudClient() as client:
         user_resp = await client.get("/user/me")
         user_data = user_resp.get("data_user", {})
+        all_files = await client.get_all_files()
     return {
         "status": "connected",
         "user_id": user_data.get("id"),
         "email": user_data.get("email"),
+        "file_count": len(all_files),
     }
 
 
