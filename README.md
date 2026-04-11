@@ -4,7 +4,7 @@ A containerized [MCP](https://modelcontextprotocol.io) server that gives Claude 
 
 ## What you get
 
-Eight tools available to Claude once connected:
+Eleven tools available to Claude once connected:
 
 | Tool | What it does |
 |------|-------------|
@@ -15,6 +15,9 @@ Eight tools available to Claude once connected:
 | `get_file` | Metadata for a specific recording |
 | `get_transcript` | Full transcript with speaker labels |
 | `get_summary` | AI-generated summary |
+| `get_highlights` | AI-generated highlights for a recording |
+| `list_folders` | List Plaud folders (file tags) |
+| `get_folder_files` | Recordings that belong to a specific folder |
 | `search_transcripts` | Search across recent transcripts |
 
 ## Quick start
@@ -87,6 +90,9 @@ Once connected, ask Claude things like:
 - *"Get the transcript from my meeting yesterday"*
 - *"Search my recordings for anything about the budget"*
 - *"Summarize the recording from April 8th"*
+- *"Show me the highlights from my last meeting"*
+- *"List my Plaud folders"*
+- *"Show me the recordings in my Work folder"*
 
 ## Token refresh
 
@@ -97,6 +103,8 @@ python scripts/get-token.py
 # Update .env with the new token
 docker compose up -d --force-recreate
 ```
+
+For mounted-secret workflows, the runtime also supports `PLAUD_TOKEN_FILE` and will reload rotated token-file contents on subsequent requests without restarting the process.
 
 ## Running without Docker
 

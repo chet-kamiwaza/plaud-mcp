@@ -1,5 +1,5 @@
 """
-Unit tests for all 8 Plaud MCP tools in plaud_mcp.server.
+Unit tests for all 11 Plaud MCP tools in plaud_mcp.server.
 
 Mocking strategy:
   - PlaudClient is patched at "plaud_mcp.server.PlaudClient" so that
@@ -57,6 +57,11 @@ class TestCheckConnection:
             "status": 0,
             "data_user": {"id": "user-001", "email": "user@example.com"},
         }
+        count_resp = {
+            "status": 0,
+            "data_file_list": [],
+            "data_file_total": 42,
+        }
         mock_client = make_mock_client(get_side_effects=user_resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
@@ -90,6 +95,9 @@ class TestGetFileCount:
     async def test_returns_count_from_all_files(self):
         files = [{"id": f"f{i}"} for i in range(17)]
         mock_client = make_mock_client(all_files=files)
+    async def test_returns_count_from_total(self):
+        resp = {"status": 0, "data_file_list": [], "data_file_total": 17}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_file_count
@@ -99,6 +107,9 @@ class TestGetFileCount:
 
     async def test_returns_zero_when_no_files(self):
         mock_client = make_mock_client(all_files=[])
+    async def test_returns_zero_when_total_missing(self):
+        resp = {"status": 0}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_file_count
@@ -117,6 +128,12 @@ class TestGetRecentFiles:
         old = {"id": "f2", "filename": "Old", "start_time": _ms(10 * 86400)}        # 10 days ago
 
         mock_client = make_mock_client(all_files=[recent, old])
+        now = time.time()
+        recent = {"id": "f1", "filename": "Recent", "start_time": int(now - 86400)}      # 1 day ago
+        old = {"id": "f2", "filename": "Old", "start_time": int(now - 10 * 86400)}        # 10 days ago
+
+        resp = {"status": 0, "data_file_list": [recent, old], "data_file_total": 2}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_recent_files
@@ -131,6 +148,12 @@ class TestGetRecentFiles:
         file2 = {"id": "a2", "start_time": _ms(3600)}
 
         mock_client = make_mock_client(all_files=[file1, file2])
+        now = time.time()
+        file1 = {"id": "a1", "start_time": int(now - 100)}
+        file2 = {"id": "a2", "start_time": int(now - 3600)}
+
+        resp = {"status": 0, "data_file_list": [file1, file2], "data_file_total": 2}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_recent_files
@@ -143,6 +166,11 @@ class TestGetRecentFiles:
         old = {"id": "old", "start_time": _ms(30 * 86400)}
 
         mock_client = make_mock_client(all_files=[old])
+        now = time.time()
+        old = {"id": "old", "start_time": int(now - 30 * 86400)}
+
+        resp = {"status": 0, "data_file_list": [old], "data_file_total": 1}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_recent_files
@@ -163,6 +191,11 @@ class TestGetFiles:
             {"id": "x2", "start_time": 1712100000000},
         ]
         mock_client = make_mock_client(all_files=files)
+            {"id": "x1", "start_time": 1712000000},
+            {"id": "x2", "start_time": 1712100000},
+        ]
+        resp = {"status": 0, "data_file_list": files, "data_file_total": 2}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
@@ -177,6 +210,12 @@ class TestGetFiles:
         after = {"id": "b2", "start_time": 1712000000000}   # after 2024-04-01
 
         mock_client = make_mock_client(all_files=[before, after])
+        # start_date 2024-04-01 UTC = 1711929600
+        before = {"id": "b1", "start_time": 1711800000}  # before 2024-04-01
+        after = {"id": "b2", "start_time": 1712000000}   # after 2024-04-01
+
+        resp = {"status": 0, "data_file_list": [before, after], "data_file_total": 2}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
@@ -191,6 +230,12 @@ class TestGetFiles:
         late = {"id": "e2", "start_time": 1712100000000}    # after 2024-04-02 00:00 UTC
 
         mock_client = make_mock_client(all_files=[early, late])
+        # end_date 2024-04-01 UTC: anything before 2024-04-02 00:00:00 = 1712016000 passes
+        early = {"id": "e1", "start_time": 1711900000}   # before 2024-04-02 00:00 UTC
+        late = {"id": "e2", "start_time": 1712100000}    # after 2024-04-02 00:00 UTC
+
+        resp = {"status": 0, "data_file_list": [early, late], "data_file_total": 2}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
@@ -202,6 +247,10 @@ class TestGetFiles:
     async def test_default_limit_applied(self):
         files = [{"id": f"f{i}", "start_time": _ms(i * 100)} for i in range(100)]
         mock_client = make_mock_client(all_files=files)
+    async def test_limit_clamped_to_200(self):
+        """Verify that limit > 200 is silently clamped to 200 in the API call."""
+        resp = {"status": 0, "data_file_list": [], "data_file_total": 0}
+        mock_client = make_mock_client(resp)
 
         with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
             from plaud_mcp.server import get_files
@@ -410,7 +459,330 @@ class TestGetSummary:
 
 
 # ---------------------------------------------------------------------------
-# TOOL-08: search_transcripts
+# TOOL-08: get_highlights
+# ---------------------------------------------------------------------------
+
+class TestGetHighlights:
+    async def test_returns_normalized_highlights_from_high_light_array(self):
+        detail_resp = {
+            "status": 0,
+            "data": {
+                "file_id": "hl1",
+                "content_list": [
+                    {
+                        "data_type": "high_light",
+                        "task_status": 1,
+                        "data_id": "content-1",
+                        "data_link": "https://s3.example.com/highlight.json.gz",
+                    }
+                ],
+            },
+        }
+        highlight_payload = [
+            {"content": "Ship the fix today", "timestamp": 120, "speaker": "Alice"},
+            {"mark_content": "Follow up with QA"},
+            {"title": "ignored because text keys missing"},
+        ]
+        mock_client = make_mock_client(detail_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
+             patch("plaud_mcp.server.asyncio") as mock_asyncio:
+            mock_asyncio.to_thread = AsyncMock(return_value=highlight_payload)
+            from plaud_mcp.server import get_highlights
+            result = await get_highlights("hl1")
+
+        assert result["file_id"] == "hl1"
+        assert result["source_type"] == "high_light"
+        assert result["count"] == 2
+        assert result["highlights"] == [
+            {"text": "Ship the fix today", "timestamp": 120, "speaker": "Alice"},
+            {"text": "Follow up with QA"},
+        ]
+
+    async def test_falls_back_to_mark_memo_when_high_light_failed(self):
+        detail_resp = {
+            "status": 0,
+            "data": {
+                "file_id": "hl2",
+                "content_list": [
+                    {
+                        "data_type": "high_light",
+                        "task_status": -1,
+                        "data_id": "failed-content",
+                        "data_link": "https://s3.example.com/failed.json.gz",
+                    },
+                    {
+                        "data_type": "mark_memo",
+                        "task_status": 1,
+                        "data_id": "memo-content",
+                        "data_link": "https://s3.example.com/memo.json.gz",
+                    },
+                ],
+            },
+        }
+        highlight_payload = {
+            "highlightList": [
+                {"mark_content": "Fallback memo highlight", "timestamp": 42},
+                {"content": "Second memo highlight"},
+            ]
+        }
+        mock_client = make_mock_client(detail_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
+             patch("plaud_mcp.server.asyncio") as mock_asyncio:
+            mock_asyncio.to_thread = AsyncMock(return_value=highlight_payload)
+            from plaud_mcp.server import get_highlights
+            result = await get_highlights("hl2")
+
+        assert result["source_type"] == "mark_memo"
+        assert result["count"] == 2
+        assert result["highlights"][0]["text"] == "Fallback memo highlight"
+        assert result["highlights"][0]["timestamp"] == 42
+
+    async def test_mark_note_returns_markdown_without_synthesizing_items(self):
+        detail_resp = {
+            "status": 0,
+            "data": {
+                "file_id": "hl3",
+                "content_list": [
+                    {
+                        "data_type": "mark_note",
+                        "task_status": 1,
+                        "data_id": "note-content",
+                        "data_link": "https://s3.example.com/note.md.gz",
+                    }
+                ],
+            },
+        }
+        mock_client = make_mock_client(detail_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
+             patch("plaud_mcp.server.asyncio") as mock_asyncio:
+            mock_asyncio.to_thread = AsyncMock(return_value="# Highlights\n- Capture open risks")
+            from plaud_mcp.server import get_highlights
+            result = await get_highlights("hl3")
+
+        assert result["source_type"] == "mark_note"
+        assert result["count"] == 0
+        assert result["highlights"] == []
+        assert result["note_markdown"] == "# Highlights\n- Capture open risks"
+        assert "markdown" in result["message"].lower()
+
+    async def test_missing_highlights_returns_clear_empty_result(self):
+        detail_resp = {
+            "status": 0,
+            "data": {
+                "file_id": "hl4",
+                "content_list": [
+                    {"data_type": "transaction", "data_link": "https://s3.example.com/t.json.gz"}
+                ],
+            },
+        }
+        mock_client = make_mock_client(detail_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
+             patch("plaud_mcp.server.asyncio") as mock_asyncio:
+            from plaud_mcp.server import get_highlights
+            result = await get_highlights("hl4")
+
+        mock_asyncio.to_thread.assert_not_called()
+        assert result["source_type"] is None
+        assert result["count"] == 0
+        assert result["highlights"] == []
+        assert "no highlight source" in result["message"].lower()
+
+    async def test_unready_highlight_source_returns_empty_result(self):
+        detail_resp = {
+            "status": 0,
+            "data": {
+                "file_id": "hl5",
+                "content_list": [
+                    {
+                        "data_type": "high_light",
+                        "task_status": 0,
+                        "data_id": "pending-content",
+                        "data_link": "https://s3.example.com/pending.json.gz",
+                    }
+                ],
+            },
+        }
+        mock_client = make_mock_client(detail_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
+             patch("plaud_mcp.server.asyncio") as mock_asyncio:
+            from plaud_mcp.server import get_highlights
+            result = await get_highlights("hl5")
+
+        mock_asyncio.to_thread.assert_not_called()
+        assert result["source_type"] == "high_light"
+        assert result["count"] == 0
+        assert "not ready" in result["message"].lower()
+
+    async def test_empty_file_id_raises(self):
+        with patch("plaud_mcp.server.PlaudClient"):
+            from plaud_mcp.server import get_highlights
+            with pytest.raises(ValueError, match="file_id must be a non-empty string"):
+                await get_highlights("")
+
+
+# ---------------------------------------------------------------------------
+# TOOL-09: list_folders
+# ---------------------------------------------------------------------------
+
+class TestListFolders:
+    async def test_returns_normalized_folders(self):
+        resp = {
+            "status": 0,
+            "data_filetag_list": [
+                {"id": "folder-1", "name": "Work"},
+                {"id": "folder-2", "name": "Personal"},
+            ],
+        }
+        mock_client = make_mock_client(resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import list_folders
+            result = await list_folders()
+
+        assert result == {
+            "folders": [
+                {"id": "folder-1", "name": "Work"},
+                {"id": "folder-2", "name": "Personal"},
+            ],
+            "count": 2,
+        }
+
+    async def test_returns_empty_folder_list(self):
+        mock_client = make_mock_client({"status": 0, "data_filetag_list": []})
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import list_folders
+            result = await list_folders()
+
+        assert result == {"folders": [], "count": 0}
+
+
+# ---------------------------------------------------------------------------
+# TOOL-10: get_folder_files
+# ---------------------------------------------------------------------------
+
+class TestGetFolderFiles:
+    async def test_returns_files_filtered_by_folder_id(self):
+        folder_resp = {
+            "status": 0,
+            "data_filetag_list": [
+                {"id": "folder-1", "name": "Work"},
+                {"id": "folder-2", "name": "Personal"},
+            ],
+        }
+        file_resp = {
+            "status": 0,
+            "data_file_list": [
+                {
+                    "id": "file-1",
+                    "filename": "Meeting",
+                    "start_time": 1712000000,
+                    "filetag_id_list": ["folder-1"],
+                },
+                {
+                    "id": "file-2",
+                    "filename": "Planning",
+                    "start_time": 1712100000,
+                    "filetag_id_list": ["folder-2", "folder-1"],
+                },
+                {
+                    "id": "file-3",
+                    "filename": "Loose",
+                    "start_time": 1712200000,
+                    "filetag_id_list": [],
+                },
+            ],
+            "data_file_total": 3,
+        }
+        mock_client = make_mock_client(folder_resp, file_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_folder_files
+            result = await get_folder_files("folder-1")
+
+        assert result["folder_id"] == "folder-1"
+        assert result["folder_name"] == "Work"
+        assert result["folder_exists"] is True
+        assert result["count"] == 2
+        assert result["files"] == [
+            {
+                "id": "file-1",
+                "filename": "Meeting",
+                "start_time": 1712000000,
+                "filetag_id_list": ["folder-1"],
+            },
+            {
+                "id": "file-2",
+                "filename": "Planning",
+                "start_time": 1712100000,
+                "filetag_id_list": ["folder-2", "folder-1"],
+            },
+        ]
+
+    async def test_unknown_folder_returns_clear_empty_result(self):
+        folder_resp = {
+            "status": 0,
+            "data_filetag_list": [{"id": "folder-1", "name": "Work"}],
+        }
+        mock_client = make_mock_client(folder_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_folder_files
+            result = await get_folder_files("missing-folder")
+
+        assert mock_client.get.call_count == 1
+        assert result == {
+            "folder_id": "missing-folder",
+            "folder_name": None,
+            "folder_exists": False,
+            "files": [],
+            "count": 0,
+            "message": "Folder not found.",
+        }
+
+    async def test_existing_empty_folder_returns_clear_empty_result(self):
+        folder_resp = {
+            "status": 0,
+            "data_filetag_list": [{"id": "folder-1", "name": "Work"}],
+        }
+        file_resp = {
+            "status": 0,
+            "data_file_list": [
+                {
+                    "id": "file-9",
+                    "filename": "Other",
+                    "start_time": 1712300000,
+                    "filetag_id_list": ["folder-2"],
+                }
+            ],
+            "data_file_total": 1,
+        }
+        mock_client = make_mock_client(folder_resp, file_resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_folder_files
+            result = await get_folder_files("folder-1")
+
+        assert result["folder_exists"] is True
+        assert result["folder_name"] == "Work"
+        assert result["files"] == []
+        assert result["count"] == 0
+        assert "contains no recordings" in result["message"].lower()
+
+    async def test_empty_folder_id_raises(self):
+        with patch("plaud_mcp.server.PlaudClient"):
+            from plaud_mcp.server import get_folder_files
+            with pytest.raises(ValueError, match="folder_id must be a non-empty string"):
+                await get_folder_files("")
+
+
+# ---------------------------------------------------------------------------
+# TOOL-11: search_transcripts
 # ---------------------------------------------------------------------------
 
 class TestSearchTranscripts:
@@ -419,6 +791,12 @@ class TestSearchTranscripts:
             "id": "match1",
             "filename": "Sales Call",
             "start_time": _ms(86400),  # 1 day ago — within 30-day window
+            "start_time": int(now - 86400),  # 1 day ago — within 30-day window
+        }
+        list_resp = {
+            "status": 0,
+            "data_file_list": [file_in_window],
+            "data_file_total": 1,
         }
         detail_resp = {
             "status": 0,
@@ -458,6 +836,12 @@ class TestSearchTranscripts:
             "id": "nomatch",
             "filename": "Unrelated",
             "start_time": _ms(3600),
+            "start_time": int(now - 3600),
+        }
+        list_resp = {
+            "status": 0,
+            "data_file_list": [file_in_window],
+            "data_file_total": 1,
         }
         detail_resp = {
             "status": 0,
@@ -502,6 +886,12 @@ class TestSearchTranscripts:
             "id": "old1",
             "filename": "Old Recording",
             "start_time": _ms(60 * 86400),  # 60 days ago — outside 30-day window
+            "start_time": int(now - 60 * 86400),  # 60 days ago — outside 30-day window
+        }
+        list_resp = {
+            "status": 0,
+            "data_file_list": [old_file],
+            "data_file_total": 1,
         }
         mock_client = make_mock_client(all_files=[old_file])
 
@@ -520,6 +910,12 @@ class TestSearchTranscripts:
             "id": "notr",
             "filename": "No transcript",
             "start_time": _ms(3600),
+            "start_time": int(now - 3600),
+        }
+        list_resp = {
+            "status": 0,
+            "data_file_list": [file_no_transcript],
+            "data_file_total": 1,
         }
         detail_resp = {
             "status": 0,
@@ -551,11 +947,18 @@ class TestSearchTranscripts:
             "id": "err1",
             "filename": "Error file",
             "start_time": _ms(3600),
+            "start_time": int(now - 3600),
         }
         good_file = {
             "id": "good1",
             "filename": "Good file",
             "start_time": _ms(7200),
+            "start_time": int(now - 7200),
+        }
+        list_resp = {
+            "status": 0,
+            "data_file_list": [bad_file, good_file],
+            "data_file_total": 2,
         }
         good_detail_resp = {
             "status": 0,
