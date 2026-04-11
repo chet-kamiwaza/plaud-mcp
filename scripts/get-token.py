@@ -11,6 +11,7 @@ Requirements:
   Plaud desktop app installed and signed in at least once.
   macOS only (uses the macOS Keychain via the `security` CLI).
 """
+import argparse
 import base64
 import json
 import subprocess
@@ -20,6 +21,15 @@ from pathlib import Path
 PLAUD_APP_SUPPORT = Path.home() / "Library" / "Application Support" / "Plaud"
 ENCRYPTION_JSON = PLAUD_APP_SUPPORT / "encryption.json"
 MISC_JSON = PLAUD_APP_SUPPORT / "misc.json"
+
+
+def ensure_cryptography_installed() -> None:
+    try:
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # noqa: F401
+    except ImportError:
+        print("ERROR: 'cryptography' package not found.")
+        print("Install it with:  pip install cryptography")
+        sys.exit(1)
 
 
 def get_keychain_password() -> str:
@@ -73,13 +83,20 @@ def get_device_id() -> str:
     return data.get("systemInfo", {}).get("uuid", "")
 
 
-def main():
-    try:
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # noqa
-    except ImportError:
-        print("ERROR: 'cryptography' package not found.")
-        print("Install it with:  pip install cryptography")
-        sys.exit(1)
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Extract the Plaud bearer token and optional device ID."
+    )
+    parser.add_argument(
+        "--output",
+        help="Write the decrypted bearer token to this file instead of printing it.",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None):
+    args = parse_args(argv)
+    ensure_cryptography_installed()
 
     if not ENCRYPTION_JSON.exists():
         print(f"ERROR: {ENCRYPTION_JSON} not found.")
@@ -96,6 +113,17 @@ def main():
     key = derive_key(keychain_password)
     token = decrypt_token(encrypted_b64, key)
     device_id = get_device_id()
+
+    if args.output:
+        output_path = Path(args.output).expanduser()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(f"{token}\n", encoding="utf-8")
+        print(f"Token written to {output_path}")
+        if device_id:
+            print(f"PLAUD_DEVICE_ID={device_id}")
+        else:
+            print("# PLAUD_DEVICE_ID not found — check misc.json manually")
+        return
 
     print("# Add these to your .env file:\n")
     print(f"PLAUD_TOKEN={token}")

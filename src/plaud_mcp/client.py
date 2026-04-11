@@ -25,13 +25,12 @@ class PlaudClient:
 
     def __init__(self) -> None:
         self._redirect_attempted = False
+        self._auth_retry_attempted = False
         self._client = httpx.AsyncClient(
             base_url=settings.plaud_base_url,
             follow_redirects=False,
             timeout=httpx.Timeout(30.0),
             headers={
-                "Authorization": f"bearer {settings.plaud_token}",
-                "X-Device-Id": settings.plaud_device_id,
                 "edit-from": "desktop",
                 "app-platform": "desktop",
                 "app-versionNumber": settings.plaud_app_version,
@@ -42,6 +41,10 @@ class PlaudClient:
                 "Referer": "https://web.plaud.ai/",
             },
         )
+
+    def _refresh_auth_headers(self) -> None:
+        self._client.headers["Authorization"] = f"bearer {settings.get_token()}"
+        self._client.headers["X-Device-Id"] = settings.plaud_device_id
 
     async def __aenter__(self) -> "PlaudClient":
         return self
@@ -57,6 +60,13 @@ class PlaudClient:
           -10000  -> raise PlaudAuthError (token invalid or expired)
           other   -> raise PlaudAPIError
         """
+        try:
+            self._refresh_auth_headers()
+        except RuntimeError as exc:
+            raise PlaudAuthError(
+                f"Plaud token configuration is invalid: {exc}"
+            ) from exc
+
         response = await self._client.request(method, path, **kwargs)
         response.raise_for_status()
         body = response.json()
@@ -97,6 +107,26 @@ class PlaudClient:
             return result
 
         if status == -10000:
+            if settings.plaud_token_file:
+                if self._auth_retry_attempted:
+                    msg = body.get("msg", "")
+                    raise PlaudAuthError(
+                        f"Plaud token is invalid or expired after reload retry: {msg}"
+                    )
+
+                try:
+                    self._refresh_auth_headers()
+                except RuntimeError as exc:
+                    raise PlaudAuthError(
+                        f"Plaud token reload failed: {exc}"
+                    ) from exc
+
+                self._auth_retry_attempted = True
+                try:
+                    return await self._request(method, path, **kwargs)
+                finally:
+                    self._auth_retry_attempted = False
+
             msg = body.get("msg", "")
             raise PlaudAuthError(
                 f"Plaud token is invalid or expired: {msg}"
