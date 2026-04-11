@@ -141,6 +141,44 @@ class PlaudClient:
         """Perform a GET request against the Plaud API."""
         return await self._request("GET", path, **kwargs)
 
+    async def get_all_files(
+        self, page_size: int = 200, max_pages: int = 100,
+    ) -> list[dict]:
+        """Paginate through /file/simple/web and return all recordings.
+
+        The Plaud API's ``data_file_total`` field reflects the page size, not
+        the account total, so the only way to get a complete list is to paginate
+        until a partial page is returned.
+
+        Args:
+            page_size: Number of files per request (max 200).
+            max_pages: Safety limit on number of pages to fetch (default 100,
+                       i.e. up to 20,000 files).
+
+        Returns:
+            A list of every file dict in the account, newest first.
+        """
+        page_size = min(page_size, 200)
+        all_files: list[dict] = []
+        skip = 0
+        for _ in range(max_pages):
+            resp = await self.get(
+                "/file/simple/web",
+                params={
+                    "skip": skip,
+                    "limit": page_size,
+                    "is_trash": 2,
+                    "sort_by": "start_time",
+                    "is_desc": "true",
+                },
+            )
+            batch = resp.get("data_file_list", [])
+            all_files.extend(batch)
+            if len(batch) < page_size:
+                break
+            skip += page_size
+        return all_files
+
     async def aclose(self) -> None:
         """Close the underlying httpx.AsyncClient."""
         await self._client.aclose()

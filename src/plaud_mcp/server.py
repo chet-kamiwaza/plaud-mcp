@@ -17,7 +17,6 @@ Provides 11 tools:
 Security:
   T-02-01: file_id validated non-empty before URL construction.
   T-02-02: S3 URLs only sourced from content_list[].data_link (Plaud API response).
-  T-02-04: search_transcripts bounded to 50 files.
 """
 from __future__ import annotations
 
@@ -56,21 +55,10 @@ async def check_connection() -> dict:
     async with PlaudClient() as client:
         user_resp = await client.get("/user/me")
         user_data = user_resp.get("data_user", {})
-        count_resp = await client.get(
-            "/file/simple/web",
-            params={
-                "skip": 0,
-                "limit": 1,
-                "is_trash": 2,
-                "sort_by": "start_time",
-                "is_desc": "true",
-            },
-        )
     return {
         "status": "connected",
         "user_id": user_data.get("id"),
         "email": user_data.get("email"),
-        "file_count": count_resp.get("data_file_total", 0),
     }
 
 
@@ -81,17 +69,8 @@ async def get_file_count() -> dict:
     Returns a dict with a single key: count.
     """
     async with PlaudClient() as client:
-        resp = await client.get(
-            "/file/simple/web",
-            params={
-                "skip": 0,
-                "limit": 1,
-                "is_trash": 2,
-                "sort_by": "start_time",
-                "is_desc": "true",
-            },
-        )
-    return {"count": resp.get("data_file_total", 0)}
+        all_files = await client.get_all_files()
+    return {"count": len(all_files)}
 
 
 @mcp.tool()
@@ -104,19 +83,9 @@ async def get_recent_files(days: int = 7) -> dict:
     Returns a dict with files list, count, and days.
     """
     async with PlaudClient() as client:
-        resp = await client.get(
-            "/file/simple/web",
-            params={
-                "skip": 0,
-                "limit": 100,
-                "is_trash": 2,
-                "sort_by": "start_time",
-                "is_desc": "true",
-            },
-        )
-    all_files = resp.get("data_file_list", [])
-    cutoff = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp()
-    files = [f for f in all_files if f.get("start_time", 0) >= cutoff]
+        all_files = await client.get_all_files()
+    cutoff_ms = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp() * 1000
+    files = [f for f in all_files if f.get("start_time", 0) >= cutoff_ms]
     return {"files": files, "count": len(files), "days": days}
 
 
@@ -131,37 +100,28 @@ async def get_files(
     Args:
         start_date: ISO date string "YYYY-MM-DD" (inclusive, UTC midnight).
         end_date: ISO date string "YYYY-MM-DD" (inclusive, end-of-day UTC).
-        limit: Maximum files to return (clamped to 200).
+        limit: Maximum files to return (default 50, 0 for all).
 
     Returns a dict with files list and count.
     """
-    limit = min(limit, 200)
     async with PlaudClient() as client:
-        resp = await client.get(
-            "/file/simple/web",
-            params={
-                "skip": 0,
-                "limit": limit,
-                "is_trash": 2,
-                "sort_by": "start_time",
-                "is_desc": "true",
-            },
-        )
-    files = resp.get("data_file_list", [])
+        all_files = await client.get_all_files()
     if start_date is not None:
-        start_ts = (
+        start_ms = (
             datetime.strptime(start_date, "%Y-%m-%d")
             .replace(tzinfo=timezone.utc)
-            .timestamp()
+            .timestamp() * 1000
         )
-        files = [f for f in files if f.get("start_time", 0) >= start_ts]
+        all_files = [f for f in all_files if f.get("start_time", 0) >= start_ms]
     if end_date is not None:
-        end_ts = (
+        end_ms = (
             datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             + timedelta(days=1)
-        ).timestamp()
-        files = [f for f in files if f.get("start_time", 0) < end_ts]
-    return {"files": files, "count": len(files)}
+        ).timestamp() * 1000
+        all_files = [f for f in all_files if f.get("start_time", 0) < end_ms]
+    if limit > 0:
+        all_files = all_files[:limit]
+    return {"files": all_files, "count": len(all_files)}
 
 
 @mcp.tool()
@@ -439,6 +399,9 @@ async def get_summary(file_id: str) -> dict:
     return {"file_id": file_id, "summary": summary_data}
 
 
+_SEARCH_MAX_FILES = 100
+
+
 @mcp.tool()
 async def get_highlights(file_id: str) -> dict:
     """Return normalized AI highlights for a recording.
@@ -576,35 +539,24 @@ async def get_folder_files(folder_id: str) -> dict:
 async def search_transcripts(query: str, days: int = 30) -> dict:
     """Search transcript content across recent files (client-side).
 
-    Fetches the last 50 files within the given day window, downloads each
-    transcript, and performs a case-insensitive substring match. Files with
-    no transcript or fetch errors are silently skipped.
+    Fetches files within the given day window (up to 100 most recent),
+    downloads each transcript, and performs a case-insensitive substring
+    match. Files with no transcript or fetch errors are silently skipped.
 
     Args:
         query: Search term (non-empty string).
         days: How many days back to search (default 30).
 
-    Returns a dict with query, days, matches list, and match_count.
+    Returns a dict with query, days, matches list, match_count, and files_searched.
     Raises ValueError if query is empty.
-
-    Security: T-02-04 — bounded to 50 files per call.
     """
     if not query or not query.strip():
         raise ValueError("query must be a non-empty string")
     async with PlaudClient() as client:
-        resp = await client.get(
-            "/file/simple/web",
-            params={
-                "skip": 0,
-                "limit": 50,
-                "is_trash": 2,
-                "sort_by": "start_time",
-                "is_desc": "true",
-            },
-        )
-        all_files = resp.get("data_file_list", [])
-        cutoff = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp()
-        files = [f for f in all_files if f.get("start_time", 0) >= cutoff]
+        all_files = await client.get_all_files()
+        cutoff_ms = (datetime.now(tz=timezone.utc) - timedelta(days=days)).timestamp() * 1000
+        files = [f for f in all_files if f.get("start_time", 0) >= cutoff_ms]
+        files = files[:_SEARCH_MAX_FILES]
 
         matches = []
         for f in files:
@@ -641,5 +593,13 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
                         "snippet": snippet,
                     }
                 )
+
+    return {
+        "query": query,
+        "days": days,
+        "matches": matches,
+        "match_count": len(matches),
+        "files_searched": len(files),
+    }
 
     return {"query": query, "days": days, "matches": matches, "match_count": len(matches)}
