@@ -15,7 +15,9 @@ from .server import mcp
 def main() -> None:
     transport = os.environ.get("MCP_TRANSPORT", "stdio").lower().strip()
     if transport == "http":
-        mcp.run(transport="streamable-http", host="0.0.0.0", port=8080)
+        # HTTP mode is intended for container/Kubernetes deployments, so
+        # binding all interfaces is required for the service to be reachable.
+        mcp.run(transport="streamable-http", host="0.0.0.0", port=8080)  # nosec B104
     else:
         mcp.run(transport="stdio")
 
