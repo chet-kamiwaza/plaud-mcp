@@ -7,7 +7,7 @@
 #            They must be injected at runtime via env or K8s Secret.
 #   T-03-02: Container runs as non-root UID 1000.
 
-FROM python:3.10-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
