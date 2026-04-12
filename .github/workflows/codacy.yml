@@ -23,17 +23,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # GitHub SARIF-only: do not pass CODACY_PROJECT_TOKEN here. With a project
+      # token, the CLI loads tool settings from codacy.com; Trivy enabled there
+      # with zero patterns triggers "Failed to configure Codacy Trivy: no patterns
+      # configured". Fix in Codacy UI (Code patterns → Trivy) if you need token
+      # sync with the dashboard, then you may re-add project-token.
       - name: Run Codacy Analysis CLI
         uses: codacy/codacy-analysis-cli-action@v4
         with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           verbose: true
           output: results.sarif
           format: sarif
           gh-code-scanning-compat: true
           max-allowed-issues: 2147483647
+          allow-network: true
 
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
+          category: codacy-cli
