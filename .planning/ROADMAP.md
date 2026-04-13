@@ -1,97 +1,72 @@
 # Roadmap: Plaud MCP Server
 
+## v1.1 Podman Support
+
 ## Overview
 
-This brownfield roadmap starts from an already working Plaud MCP server and focuses the first milestone on hardening the service for safer self-hosting, easier diagnosis, better scalability, and more reproducible releases. The existing `.planning/codebase/` analysis remains the baseline for current-state understanding; these phases define what to improve next.
+This milestone advances the existing containerized Plaud MCP server by adding Podman support alongside Docker Desktop for local macOS development. The focus is practical local parity: make the repo runnable and testable on a Mac laptop with Podman, preserve the existing Docker workflow, and update documentation so the new runtime path is explicit and supportable.
 
 ## Phases
 
 **Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+- Integer phases (5, 6, 7): Planned milestone work
+- Decimal phases (5.1, 5.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Security Hardening** - Tighten transport exposure and credential-safety defaults
-- [ ] **Phase 2: Runtime Stability and Observability** - Make failures diagnosable and configuration loading less brittle
-- [ ] **Phase 3: Performance and Scaling Guardrails** - Reduce latency and waste in search and folder/file traversal paths
-- [ ] **Phase 4: Release Reproducibility and Test Confidence** - Align runtime versions, lock dependencies, and close risky coverage gaps
+- [ ] **Phase 5: Podman Runtime Compatibility** - Make the local container workflow work under Podman without breaking Docker Desktop
+- [ ] **Phase 6: Local Mac Validation Workflow** - Define and verify the Podman-based local build, startup, and test path on macOS
+- [ ] **Phase 7: Documentation and Rollout Guidance** - Update README and related docs for installation, usage, and troubleshooting across both runtimes
 
 ## Phase Details
 
-### Phase 1: Security Hardening
-**Goal**: Reduce the most immediate security and deployment-default risks in the current server.
-**Depends on**: Nothing (first phase)
-**Requirements**: SEC-01, SEC-02
+### Phase 5: Podman Runtime Compatibility
+**Goal**: Adapt the current Docker-oriented local workflow so the service can run cleanly under Podman on macOS.
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: RT-01, RT-02
 **Success Criteria** (what must be TRUE):
-  1. Local HTTP deployment defaults do not expose the server on untrusted interfaces unless explicitly configured
-  2. Redirect validation only trusts `plaud.ai` and true subdomains, not suffix lookalikes
-  3. Configuration and error paths avoid cleartext token leakage in common diagnostics
+  1. The image builds and the service starts locally with Podman on macOS using repo-defined commands or scripts
+  2. Required environment variables, mounted token storage, and exposed ports behave correctly under Podman
+  3. Existing Docker Desktop usage remains intact or is intentionally adjusted with clear compatibility handling
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Lock down transport and redirect validation behavior
-- [ ] 01-02: Redact secrets safely in configuration and diagnostics paths
+- [ ] 05-01: Audit and update runtime-specific container configuration for Podman compatibility
+- [ ] 05-02: Add any repo-level command, script, or config changes needed to support both Docker Desktop and Podman locally
 
-### Phase 2: Runtime Stability and Observability
-**Goal**: Make the service easier to operate and safer to import, test, and extend.
-**Depends on**: Phase 1
-**Requirements**: OPS-01, OPS-02
+### Phase 6: Local Mac Validation Workflow
+**Goal**: Prove the project can be verified locally on a Mac laptop through a repeatable Podman workflow.
+**Depends on**: Phase 5
+**Requirements**: VAL-01, VAL-02
 **Success Criteria** (what must be TRUE):
-  1. Tool failures produce enough structured signal to diagnose auth, API, and S3 retrieval issues
-  2. Configuration can be loaded lazily for code paths and tests that do not require live credentials at import time
-  3. Existing behavior for stdio and HTTP transports stays intact while internals become easier to maintain
+  1. Podman installation and local machine prerequisites for macOS are defined and verifiable
+  2. A local verification workflow covers image build, service startup, and automated tests under Podman
+  3. Docker Desktop verification still works and any runtime differences are explicitly accounted for
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Introduce runtime diagnostics and error visibility
-- [ ] 02-02: Refactor settings lifecycle away from import-time hard failure
+- [ ] 06-01: Establish the local Podman setup and verification commands for macOS
+- [ ] 06-02: Run and document local regression checks for both supported runtimes where feasible
 
-### Phase 3: Performance and Scaling Guardrails
-**Goal**: Improve responsiveness for large Plaud libraries without abandoning the current stateless design.
-**Depends on**: Phase 2
-**Requirements**: PERF-01, PERF-02
+### Phase 7: Documentation and Rollout Guidance
+**Goal**: Make the new runtime support usable by documenting setup, commands, and troubleshooting in the repo.
+**Depends on**: Phase 6
+**Requirements**: DOC-01, DOC-02
 **Success Criteria** (what must be TRUE):
-  1. Transcript search no longer performs fully serialized per-file fetches across the search window
-  2. Folder/file listing avoids unnecessary repeated full-library scans where bounded reuse can help
-  3. Performance limits and safeguards are documented in code and tests so regressions are visible
+  1. The README explains Podman installation and setup for local macOS usage in this repo
+  2. Runtime-specific examples and prerequisites are clear for Docker Desktop and Podman users
+  3. Feature enhancement notes and troubleshooting guidance reflect the final implemented workflow
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Add bounded concurrency to transcript search and related fetch paths
-- [ ] 03-02: Reduce repeated full-library work and document scaling limits
-
-### Phase 4: Release Reproducibility and Test Confidence
-**Goal**: Make builds deterministic and close high-risk gaps in automated verification.
-**Depends on**: Phase 3
-**Requirements**: REL-01, REL-02
-**Success Criteria** (what must be TRUE):
-  1. Local, CI, and container Python/runtime expectations align or are intentionally pinned with documentation
-  2. Dependency installation is reproducible from a known-good locked or pinned state
-  3. High-risk helpers and currently uncovered edge cases have automated tests guarding them
-**Plans**: 2 plans
-
-Plans:
-- [ ] 04-01: Align runtime and dependency reproducibility
-- [ ] 04-02: Close targeted testing gaps around helpers and edge cases
+- [ ] 07-01: Update README quick-start and prerequisites for dual-runtime support
+- [ ] 07-02: Add troubleshooting and feature-enhancement notes covering Podman usage on macOS
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
+Phases execute in numeric order: 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security Hardening | 0/2 | Not started | - |
-| 2. Runtime Stability and Observability | 0/2 | Not started | - |
-| 3. Performance and Scaling Guardrails | 0/2 | Not started | - |
-| 4. Release Reproducibility and Test Confidence | 0/2 | Not started | - |
-
-## Backlog
-
-### Phase 999.1: add support for Podman containers (BACKLOG)
-
-**Goal:** Captured for future planning
-**Requirements:** TBD
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (promote with /gsd-review-backlog when ready)
+| 5. Podman Runtime Compatibility | 0/2 | Not started | - |
+| 6. Local Mac Validation Workflow | 0/2 | Not started | - |
+| 7. Documentation and Rollout Guidance | 0/2 | Not started | - |

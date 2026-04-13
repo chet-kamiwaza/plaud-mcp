@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-13)
 
 **Core value:** An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
-**Current focus:** Phase 1 - Security Hardening
+**Current focus:** Phase 5 - Podman Runtime Compatibility
 
 ## Current Position
 
-Phase: 1 of 4 (Security Hardening)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-04-13 - Initialized GSD bootstrap around existing codebase map
+Phase: Not started (defining requirements)
+Plan: -
+Status: Defining requirements
+Last activity: 2026-04-13 - Milestone v1.1 Podman Support started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -40,8 +40,9 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Initialization preserved the existing `.planning/codebase/` documents instead of regenerating them
-- Initial roadmap is a coarse 4-phase hardening milestone for the already-working server
+- Podman support on macOS is now the active milestone rather than a backlog item
+- The milestone scope is local runtime parity and documentation, not a full container-platform redesign
+- Docker Desktop remains supported while Podman support is added
 
 ### Pending Todos
 
@@ -49,10 +50,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- The project was partially initialized before this bootstrap; verify downstream commands now recognize PROJECT.md, REQUIREMENTS.md, ROADMAP.md, and STATE.md together
+- Podman-specific behavior on macOS may differ from Docker Desktop around compose support, volume mounts, and networking defaults
+- Local validation depends on Podman being installed and usable on the target Mac environment
 
 ## Session Continuity
 
-Last session: 2026-04-13 19:00 EDT
-Stopped at: Brownfield GSD bootstrap completed and ready for `/gsd-plan-phase 1`
+Last session: 2026-04-13 19:20 EDT
+Stopped at: Milestone v1.1 defined and ready for `/gsd-plan-phase 5`
 Resume file: None
