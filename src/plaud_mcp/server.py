@@ -159,7 +159,10 @@ def _fetch_s3_content(data_link: str) -> Any:
     """
     response = httpx.get(data_link, follow_redirects=True, timeout=30.0)
     response.raise_for_status()
-    raw = gzip.decompress(response.content)
+    try:
+        raw = gzip.decompress(response.content)
+    except gzip.BadGzipFile:
+        raw = response.content
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
@@ -361,9 +364,15 @@ async def get_transcript(file_id: str) -> dict:
     if content_item is None:
         raise ValueError(f"No transcript found for file_id={file_id}")
     transcript_data = await asyncio.to_thread(_fetch_s3_content, content_item["data_link"])
+    # Handle both formats: {"list": [...]} (gzipped) and [...] (plain JSON)
+    if isinstance(transcript_data, list):
+        transcript_list = transcript_data
+        transcript_data = {"list": transcript_list}
+    else:
+        transcript_list = transcript_data.get("list", [])
     speakers = {
         item.get("speaker")
-        for item in transcript_data.get("list", [])
+        for item in transcript_list
         if item.get("speaker")
     }
     return {
