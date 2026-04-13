@@ -364,9 +364,15 @@ async def get_transcript(file_id: str) -> dict:
     if content_item is None:
         raise ValueError(f"No transcript found for file_id={file_id}")
     transcript_data = await asyncio.to_thread(_fetch_s3_content, content_item["data_link"])
+    # Handle both formats: {"list": [...]} (gzipped) and [...] (plain JSON)
+    if isinstance(transcript_data, list):
+        transcript_list = transcript_data
+        transcript_data = {"list": transcript_list}
+    else:
+        transcript_list = transcript_data.get("list", [])
     speakers = {
         item.get("speaker")
-        for item in transcript_data.get("list", [])
+        for item in transcript_list
         if item.get("speaker")
     }
     return {
