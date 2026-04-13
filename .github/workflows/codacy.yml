@@ -29,7 +29,8 @@ jobs:
       # configured". Fix in Codacy UI (Code patterns → Trivy) if you need token
       # sync with the dashboard, then you may re-add project-token.
       - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@v4
+        # Pinned to full-length commit SHA (tag v4) for supply-chain safety.
+        uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4
         with:
           verbose: true
           output: results.sarif

@@ -578,8 +578,9 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
                 transcript_data = await asyncio.to_thread(
                     _fetch_s3_content, content_item["data_link"]
                 )
-            except Exception:
-                continue  # skip files with missing or erroring transcripts
+            except (httpx.HTTPError, KeyError, ValueError, json.JSONDecodeError):
+                # Skip files with missing or erroring transcripts.
+                continue
 
             full_text = " ".join(
                 item.get("text", "") for item in transcript_data.get("list", [])

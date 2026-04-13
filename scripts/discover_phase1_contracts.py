@@ -15,7 +15,7 @@ import json
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404 - fixed-argv invocations of `npx asar extract` only
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -36,7 +36,7 @@ ARTIFACT_DIR = (
 )
 WEB_APP_URL = "https://web.plaud.ai/"
 WEB_CHUNK_FALLBACK = Path("/tmp/plaud_web_common.js")
-DESKTOP_EXTRACT_ROOT = Path(tempfile.gettempdir()) / "plaud_extract"
+DESKTOP_EXTRACT_ROOT = Path(tempfile.gettempdir()) / "plaud_extract"  # nosec B108 - dev-only discovery script, path is cache-like
 APP_ASAR = Path("/Applications/Plaud.app/Contents/Resources/app.asar")
 LOG_DIR = Path.home() / "Library" / "Application Support" / "Plaud" / "logs"
 
@@ -163,7 +163,7 @@ def ensure_desktop_extract() -> Path | None:
     npx = shutil.which("npx")
     if npx is None:
         return None
-    subprocess.run(
+    subprocess.run(  # nosec B603 - fixed argv, resolved `npx`, no shell
         [npx, "--yes", "asar", "extract", str(APP_ASAR), str(DESKTOP_EXTRACT_ROOT)],
         check=True,
         capture_output=True,

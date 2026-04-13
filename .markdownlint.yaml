@@ -1,0 +1,15 @@
+# Markdownlint configuration. Docs: https://github.com/DavidAnson/markdownlint
+---
+default: true
+
+# MD013 (line-length) — prose wrapping isn't useful for this repo's docs.
+MD013: false
+
+# MD012 (no-multiple-blanks) — we use double blank lines as section breaks.
+MD012: false
+
+# MD033 (no-inline-html) — needed for Mermaid / details blocks.
+MD033: false
+
+# MD041 (first-line-heading) — some files start with frontmatter or badges.
+MD041: false

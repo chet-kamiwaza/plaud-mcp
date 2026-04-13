@@ -1,0 +1,8 @@
+# deploy/namespace.yaml
+# Dedicated namespace for Plaud MCP Server — avoids using `default`.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: plaud-mcp
+  labels:
+    app: plaud-mcp

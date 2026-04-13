@@ -10,6 +10,7 @@ JWT expiry is decoded from the token payload using stdlib only (no PyJWT).
 from __future__ import annotations
 
 import base64
+import datetime
 import hashlib
 import hmac
 import json
@@ -17,7 +18,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 import httpx
 
@@ -172,7 +173,7 @@ class TokenManager:
         if not token:
             raise PlaudAuthError("Login response missing access_token")
 
-        logger.info(
+        logger.info(  # nosec B105 - logs expiry only, not token value
             "Token refreshed via password login (expires: %s)",
             _format_expiry(token),
         )
@@ -211,7 +212,7 @@ class TokenManager:
         if not token:
             raise PlaudAuthError("Auth code response missing access_token")
 
-        logger.info(
+        logger.info(  # nosec B105 - logs expiry only, not token value
             "Token obtained via auth code exchange (expires: %s)",
             _format_expiry(token),
         )
@@ -264,11 +265,12 @@ class TokenManager:
 
 
 def _format_expiry(token: str) -> str:
-    """Format a JWT's expiry as a human-readable date string."""
+    """Format a JWT's expiry as an ISO 8601 date string (UTC)."""
     exp = decode_jwt_expiry(token)
     if exp is None:
         return "unknown"
-    import datetime
-    return datetime.datetime.fromtimestamp(exp, tz=datetime.timezone.utc).strftime(
-        "%Y-%m-%d"
+    return (
+        datetime.datetime.fromtimestamp(exp, tz=datetime.timezone.utc)
+        .date()
+        .isoformat()
     )

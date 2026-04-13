@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import datetime
 import os
 import sys
 import uuid
@@ -117,9 +118,8 @@ def main() -> None:
     exp = decode_jwt_expiry(token)
     print(f"\nToken written to: {args.token_file}")
     if exp is not None:
-        import datetime
         expiry = datetime.datetime.fromtimestamp(exp, tz=datetime.timezone.utc)
-        print(f"Token expires:    {expiry.strftime('%Y-%m-%d')} (re-run this script before then)")
+        print(f"Token expires:    {expiry.date().isoformat()} (re-run this script before then)")
     print("\nDone. Start the MCP server with PLAUD_TOKEN_FILE pointing to this file.")
 
 
