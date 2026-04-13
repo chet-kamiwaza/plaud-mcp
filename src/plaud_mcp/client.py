@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import httpx
 
+from .auth import TokenManager
 from .config import settings
 from .errors import PlaudAPIError, PlaudAuthError
 
@@ -26,6 +27,16 @@ class PlaudClient:
     def __init__(self) -> None:
         self._redirect_attempted = False
         self._auth_retry_attempted = False
+        self._token_manager: TokenManager | None = None
+        if settings.plaud_auto_refresh:
+            self._token_manager = TokenManager(
+                token_file=settings.plaud_token_file,
+                base_url=settings.plaud_base_url,
+                device_id=settings.plaud_device_id,
+                app_version=settings.plaud_app_version,
+                email=settings.plaud_email,
+                password=settings.plaud_password,
+            )
         self._client = httpx.AsyncClient(
             base_url=settings.plaud_base_url,
             follow_redirects=False,
@@ -42,8 +53,23 @@ class PlaudClient:
             },
         )
 
-    def _refresh_auth_headers(self) -> None:
-        self._client.headers["Authorization"] = f"bearer {settings.get_token()}"
+    async def _refresh_auth_headers(self) -> None:
+        if self._token_manager is not None:
+            token = await self._token_manager.ensure_valid_token()
+        else:
+            token = settings.get_token()
+        self._client.headers["Authorization"] = f"bearer {token}"
+        self._client.headers["X-Device-Id"] = settings.plaud_device_id
+
+    async def _force_relogin(self) -> None:
+        """Force a fresh password login (used when the API rejects the token)."""
+        if self._token_manager is None:
+            raise PlaudAuthError(
+                "Token rejected by Plaud API and auto-refresh is not configured"
+            )
+        new_token = await self._token_manager.login_with_password()
+        self._token_manager._write_token(new_token)
+        self._client.headers["Authorization"] = f"bearer {new_token}"
         self._client.headers["X-Device-Id"] = settings.plaud_device_id
 
     async def __aenter__(self) -> "PlaudClient":
@@ -61,7 +87,7 @@ class PlaudClient:
           other   -> raise PlaudAPIError
         """
         try:
-            self._refresh_auth_headers()
+            await self._refresh_auth_headers()
         except RuntimeError as exc:
             raise PlaudAuthError(
                 f"Plaud token configuration is invalid: {exc}"
@@ -107,6 +133,30 @@ class PlaudClient:
             return result
 
         if status == -10000:
+            # Auto-refresh mode: force a fresh login and retry once.
+            if self._token_manager is not None:
+                if self._auth_retry_attempted:
+                    msg = body.get("msg", "")
+                    raise PlaudAuthError(
+                        f"Plaud token still invalid after re-login: {msg}"
+                    )
+
+                try:
+                    await self._force_relogin()
+                except PlaudAuthError:
+                    raise
+                except Exception as exc:
+                    raise PlaudAuthError(
+                        f"Re-login failed: {exc}"
+                    ) from exc
+
+                self._auth_retry_attempted = True
+                try:
+                    return await self._request(method, path, **kwargs)
+                finally:
+                    self._auth_retry_attempted = False
+
+            # File-based token: re-read the file and retry once.
             if settings.plaud_token_file:
                 if self._auth_retry_attempted:
                     msg = body.get("msg", "")
@@ -115,7 +165,7 @@ class PlaudClient:
                     )
 
                 try:
-                    self._refresh_auth_headers()
+                    await self._refresh_auth_headers()
                 except RuntimeError as exc:
                     raise PlaudAuthError(
                         f"Plaud token reload failed: {exc}"
