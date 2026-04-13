@@ -22,65 +22,57 @@ Eleven tools available to Claude once connected:
 
 ## Quick start
 
+Choose the auth mode that matches your Plaud account:
+
+### Option A — Auto-refresh (you sign in to Plaud with email + password)
+
+The container logs in automatically and refreshes the token before it expires. Set it up once and forget about it.
+
 ```bash
 git clone https://github.com/chet-kamiwaza/plaud-mcp
 cd plaud-mcp
-pip install cryptography
-python scripts/get-token.py   # prints your PLAUD_TOKEN + PLAUD_DEVICE_ID
-cp .env.example .env          # edit .env with the values above
+cp .env.example .env
+# Edit .env: set PLAUD_AUTO_REFRESH=true, PLAUD_EMAIL, PLAUD_PASSWORD, PLAUD_DEVICE_ID
 docker compose up -d
 claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
 ```
 
-Open a new Claude Code session — the Plaud tools are ready.
+### Option B — Browser auth (you sign in to Plaud with Google or Apple SSO)
+
+SSO accounts can't use the password login endpoint. Run the setup script once to grab a long-lived token (~10 months) via the same browser flow the desktop app uses.
+
+```bash
+git clone https://github.com/chet-kamiwaza/plaud-mcp
+cd plaud-mcp
+python scripts/setup-auth.py
+# Sign in with Google/Apple in the browser that opens.
+# Copy the plaud:// redirect URL from the address bar and paste it back.
+cp .env.example .env
+# Set PLAUD_TOKEN_FILE=/app/data/plaud.token, PLAUD_DEVICE_ID=...
+docker compose up -d
+claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
+```
+
+Re-run `scripts/setup-auth.py` when the token nears expiry (it prints the date).
+
+### Option C — Manual token (legacy)
+
+Extract the token directly from a logged-in macOS Plaud desktop app. Requires re-extraction every ~26 days.
+
+```bash
+pip install cryptography
+python scripts/get-token.py
+cp .env.example .env          # set PLAUD_TOKEN and PLAUD_DEVICE_ID
+docker compose up -d
+claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
+```
 
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
 - [Claude Code](https://claude.ai/code) CLI installed
-- Plaud desktop app installed and signed in (macOS) — needed once to extract your token
-
-## Setup
-
-### 1. Get your Plaud token (macOS)
-
-The Plaud token is stored encrypted in the desktop app. The helper script extracts it automatically:
-
-```bash
-pip install cryptography
-python scripts/get-token.py
-```
-
-Copy the output — you'll need it in the next step.
-
-### 2. Create your `.env` file
-
-```bash
-cp .env.example .env
-# Edit .env and paste your token values
-```
-
-`.env`:
-```
-PLAUD_TOKEN=eyJ...
-PLAUD_DEVICE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-```
-
-### 3. Start the container
-
-```bash
-docker compose up -d
-```
-
-The `docker-compose.yml` pulls the pre-built image from `ghcr.io/chet-kamiwaza/plaud-mcp:latest` automatically. The container will restart whenever Docker Desktop starts (`restart: unless-stopped`).
-
-### 4. Connect to Claude Code
-
-```bash
-claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
-```
-
-That's it. Open a new Claude Code session and the Plaud tools will be available.
+- A Plaud account (any sign-in method)
+- For Option C only: the Plaud desktop app on macOS, signed in
 
 ## Usage
 
@@ -96,15 +88,13 @@ Once connected, ask Claude things like:
 
 ## Token refresh
 
-Plaud tokens expire roughly every 26 days. When yours expires, re-run the helper script and update `.env`:
+The behaviour depends on which auth mode you picked:
 
-```bash
-python scripts/get-token.py
-# Update .env with the new token
-docker compose up -d --force-recreate
-```
+- **Option A (auto-refresh):** Nothing to do. The server decodes the JWT's `exp` claim, and re-logs in automatically when the token is within 30 days of expiry. The new token is persisted to the mounted `plaud-data` volume.
+- **Option B (SSO browser auth):** Re-run `python scripts/setup-auth.py` once every ~10 months. The script prints the expiry date when it writes the token.
+- **Option C (manual token):** Re-run `python scripts/get-token.py` every ~26 days, update `.env`, and `docker compose up -d --force-recreate`.
 
-For mounted-secret workflows, the runtime also supports `PLAUD_TOKEN_FILE` and will reload rotated token-file contents on subsequent requests without restarting the process.
+For Kubernetes/mounted-secret workflows, `PLAUD_TOKEN_FILE` is reloaded on subsequent requests without restarting the process — useful when an external system rotates the token.
 
 ## Running without Docker
 

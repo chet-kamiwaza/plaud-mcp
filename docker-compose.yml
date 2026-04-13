@@ -6,6 +6,21 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - PLAUD_TOKEN=${PLAUD_TOKEN}
+      # Legacy static token mode (uncomment to use):
+      # - PLAUD_TOKEN=${PLAUD_TOKEN}
+
+      # Auto-refresh mode (recommended for password users):
+      - PLAUD_EMAIL=${PLAUD_EMAIL}
+      - PLAUD_PASSWORD=${PLAUD_PASSWORD}
+      - PLAUD_AUTO_REFRESH=${PLAUD_AUTO_REFRESH:-false}
+
+      # Token file (required for auto-refresh; also used for SSO setup):
+      - PLAUD_TOKEN_FILE=${PLAUD_TOKEN_FILE:-/app/data/plaud.token}
+
       - PLAUD_DEVICE_ID=${PLAUD_DEVICE_ID}
       - MCP_TRANSPORT=http
+    volumes:
+      - plaud-data:/app/data
+
+volumes:
+  plaud-data:
