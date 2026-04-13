@@ -110,7 +110,7 @@ async def test_login_with_password_success(tmp_path: Path):
         device_id="dev",
         app_version="5.3.9",
         email="user@example.com",
-        password="secret",
+        password="secret",  # nosec B106 - test fixture
     )
     result = await manager.login_with_password()
     assert result == new_token
@@ -131,7 +131,7 @@ async def test_login_with_password_wrong_credentials(tmp_path: Path):
         device_id="dev",
         app_version="5.3.9",
         email="user@example.com",
-        password="wrong",
+        password="wrong",  # nosec B106 - test fixture
     )
     with pytest.raises(PlaudAuthError, match="wrong password"):
         await manager.login_with_password()
@@ -190,7 +190,7 @@ async def test_ensure_valid_token_returns_existing_fresh_token(tmp_path: Path):
         device_id="dev",
         app_version="5.3.9",
         email="u@e.com",
-        password="pw",
+        password="pw",  # nosec B106 - test fixture
     )
     assert await manager.ensure_valid_token() == fresh
 
@@ -215,7 +215,7 @@ async def test_ensure_valid_token_refreshes_expiring_token(tmp_path: Path):
         device_id="dev",
         app_version="5.3.9",
         email="u@e.com",
-        password="pw",
+        password="pw",  # nosec B106 - test fixture
     )
     result = await manager.ensure_valid_token()
     assert result == new_token
@@ -241,7 +241,7 @@ async def test_ensure_valid_token_initial_login_when_no_file(tmp_path: Path):
         device_id="dev",
         app_version="5.3.9",
         email="u@e.com",
-        password="pw",
+        password="pw",  # nosec B106 - test fixture
     )
     result = await manager.ensure_valid_token()
     assert result == new_token

@@ -14,6 +14,7 @@ WORKDIR /app
 # Copy source and install.
 COPY pyproject.toml ./
 COPY src/ src/
+# hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir .
 

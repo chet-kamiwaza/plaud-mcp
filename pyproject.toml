@@ -29,3 +29,47 @@ where = ["src"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.bandit]
+# B101 (assert_used) fires on every test assertion — tests are the *intended*
+# use of assert. Exclude the tests directory to silence that noise.
+exclude_dirs = ["tests", ".planning"]
+skips = ["B101"]
+
+[tool.pylint.main]
+# PEP 585 generics (list[str], dict[...]) and asyncio.run require >=3.9/3.7.
+# Several "false positive" Codacy findings (E1136 unsubscriptable,
+# E1101 asyncio.run) disappear once pylint targets a modern interpreter.
+py-version = "3.10"
+ignore = ["tests", ".planning"]
+
+[tool.pylint."messages control"]
+# Style-only rules that are noisy for this project. Bugs/anti-patterns stay on.
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "line-too-long",
+    "import-outside-toplevel",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-positional-arguments",
+    "too-many-branches",
+    "too-many-locals",
+    "too-many-statements",
+    "too-many-instance-attributes",
+    "broad-exception-caught",
+    "broad-except",
+    "wrong-import-position",
+    "wrong-import-order",
+    "protected-access",
+    "unused-import",  # handled by ruff/flake8 more accurately
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = [".planning"]

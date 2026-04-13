@@ -10,6 +10,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: plaud-mcp
+  namespace: plaud-mcp
   labels:
     app: plaud-mcp
 spec:
@@ -26,10 +27,17 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      automountServiceAccountToken: false
       containers:
         - name: plaud-mcp
-          image: plaud-mcp:latest
-          imagePullPolicy: IfNotPresent
+          # Replace the tag with a pinned version and ideally a sha256 digest
+          # (e.g. plaud-mcp:0.1.0@sha256:<digest>) before deploying to prod.
+          image: plaud-mcp:0.1.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http
@@ -40,6 +48,19 @@ spec:
           envFrom:
             - secretRef:
                 name: plaud-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /app/data
           resources:
             requests:
               cpu: "50m"
@@ -61,4 +82,42 @@ spec:
               port: 8080
             initialDelaySeconds: 3
             periodSeconds: 10
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
       terminationGracePeriodSeconds: 30
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: plaud-mcp
+  namespace: plaud-mcp
+spec:
+  podSelector:
+    matchLabels:
+      app: plaud-mcp
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow incoming HTTP from within the cluster only (ClusterIP Service).
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # DNS resolution.
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Outbound HTTPS to Plaud's API.
+    - ports:
+        - protocol: TCP
+          port: 443

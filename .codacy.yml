@@ -1,0 +1,34 @@
+# Codacy repository configuration.
+# Docs: https://docs.codacy.com/repositories-configure/codacy-configuration-file/
+---
+exclude_paths:
+  - '.planning/**'
+  - '.claude/**'
+  - '.github/workflows/codacy.yml'  # already hardened; action pinned to SHA
+  - 'scripts/discover_phase1_contracts.py'  # one-shot discovery utility
+
+engines:
+  markdownlint:
+    enabled: true
+    exclude_paths:
+      - '.planning/**'
+      - 'SECURITY.md'  # long threat-model prose; line-length not useful here
+  pylint:
+    enabled: true
+    exclude_paths:
+      - 'tests/**'
+      - 'scripts/**'
+  pylintpython3:
+    enabled: true
+    exclude_paths:
+      - 'tests/**'
+      - 'scripts/**'
+  prospector:
+    enabled: true
+    exclude_paths:
+      - 'tests/**'
+      - 'scripts/**'
+  bandit:
+    enabled: true
+    exclude_paths:
+      - 'tests/**'

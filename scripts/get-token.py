@@ -14,7 +14,7 @@ Requirements:
 import argparse
 import base64
 import json
-import subprocess
+import subprocess  # nosec B404 - used only for macOS `security` CLI with fixed argv
 import sys
 from pathlib import Path
 
@@ -33,12 +33,15 @@ def ensure_cryptography_installed() -> None:
 
 
 def get_keychain_password() -> str:
-    result = subprocess.run(
+    # Invokes the macOS `security` CLI with a fixed argv (no shell, no user
+    # input). `security` is a system binary at /usr/bin/security; resolving
+    # via PATH is acceptable for a developer helper script on macOS.
+    result = subprocess.run(  # nosec B603 B607
         ["security", "find-generic-password",
          "-s", "Plaud Safe Storage",
          "-a", "Plaud Key",
          "-w"],
-        capture_output=True, text=True
+        capture_output=True, text=True, check=False,
     )
     if result.returncode != 0:
         print("ERROR: Could not read Plaud key from Keychain.")
@@ -51,8 +54,11 @@ def derive_key(password: str) -> bytes:
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.backends import default_backend
+    # SHA1 and these PBKDF2 parameters are mandated by Chromium's safeStorage
+    # format (Electron's encryption.json). They are not a security choice we
+    # control; they are required to decrypt a file Plaud's desktop app wrote.
     kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA1(),
+        algorithm=hashes.SHA1(),  # nosec B303 - Chromium safeStorage compatibility
         length=16,
         salt=b"saltysalt",
         iterations=1003,
@@ -68,6 +74,9 @@ def decrypt_token(encrypted_b64: str, key: bytes) -> str:
     # Strip the 3-byte "v10" prefix used by Chromium
     ciphertext = ciphertext[3:]
     iv = b" " * 16
+    # AES-128-CBC is what Chromium safeStorage produces; authentication is not
+    # available in this legacy format. We are decrypting, not designing, crypto.
+    # nosemgrep: python.cryptography.security.mode-without-authentication.crypto-mode-without-authentication
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
     decryptor = cipher.decryptor()
     padded = decryptor.update(ciphertext) + decryptor.finalize()
