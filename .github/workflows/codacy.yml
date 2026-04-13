@@ -40,61 +40,33 @@ jobs:
 
       # Codacy CLI emits a single SARIF with multiple `runs[]` (one per
       # underlying tool: Trivy, Bandit, etc.). GitHub Code Scanning rejects
-      # multi-run SARIFs sharing one category, so split into one file per run.
-      - name: Split SARIF by tool
-        id: split
+      # multi-run SARIFs sharing one category. Give each run a distinct
+      # `automationDetails.id` so CodeQL treats them as separate categories,
+      # which is what the 2025-07-21 changelog requires.
+      - name: Tag SARIF runs with per-tool category
         run: |
           set -euo pipefail
-          mkdir -p sarif-split
           if [ ! -s results.sarif ]; then
-            echo "no results.sarif produced; nothing to upload"
-            echo "count=0" >> "$GITHUB_OUTPUT"
+            echo "no results.sarif produced; creating empty SARIF"
+            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[]}' > results.sarif
             exit 0
           fi
-          run_count=$(jq '.runs | length' results.sarif)
-          if [ "$run_count" -eq 0 ]; then
-            echo "results.sarif has zero runs; nothing to upload"
-            echo "count=0" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          for i in $(seq 0 $((run_count - 1))); do
-            tool=$(jq -r ".runs[$i].tool.driver.name // \"unknown\"" results.sarif \
-              | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/-\+/-/g; s/^-//; s/-$//')
-            [ -z "$tool" ] && tool="unknown"
-            out="sarif-split/${tool}-${i}.sarif"
-            jq "{version, \"\$schema\", runs: [.runs[$i]]}" results.sarif > "$out"
-            echo "wrote $out"
-          done
-          echo "count=$run_count" >> "$GITHUB_OUTPUT"
+          jq '
+            .runs |= (to_entries | map(
+              .value.automationDetails.id =
+                "codacy-cli/" +
+                ((.value.tool.driver.name // "unknown")
+                  | ascii_downcase
+                  | gsub("[^a-z0-9]+"; "-")
+                  | sub("^-"; "") | sub("-$"; "")
+                ) + "/" + (.key | tostring) + "/"
+            ) | map(.value))
+          ' results.sarif > results.tagged.sarif
+          mv results.tagged.sarif results.sarif
+          echo "Runs and their categories:"
+          jq -r '.runs[] | .automationDetails.id' results.sarif
 
-      - name: Upload split SARIF files
-        if: steps.split.outputs.count != '0'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          # Determine ref: for pull_request events, GITHUB_REF points to the
-          # merge ref; the API requires a real branch/tag/PR ref.
-          ref="${GITHUB_REF}"
-          commit="${GITHUB_SHA}"
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            commit="$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
-            head_ref="$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")"
-            ref="refs/pull/$(jq -r '.number' "$GITHUB_EVENT_PATH")/head"
-            echo "PR head: $head_ref @ $commit"
-          fi
-          for f in sarif-split/*.sarif; do
-            tool=$(basename "$f" .sarif)
-            category="codacy-cli-${tool}"
-            echo "Uploading $f as category=$category"
-            payload=$(gzip -c "$f" | base64 -w0)
-            gh api \
-              --method POST \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${GITHUB_REPOSITORY}/code-scanning/sarifs" \
-              -f "commit_sha=${commit}" \
-              -f "ref=${ref}" \
-              -f "sarif=${payload}" \
-              -f "category=${category}" \
-              -F "validate=true"
-          done
+      - name: Upload SARIF results file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
