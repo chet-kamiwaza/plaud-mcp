@@ -159,7 +159,10 @@ def _fetch_s3_content(data_link: str) -> Any:
     """
     response = httpx.get(data_link, follow_redirects=True, timeout=30.0)
     response.raise_for_status()
-    raw = gzip.decompress(response.content)
+    try:
+        raw = gzip.decompress(response.content)
+    except gzip.BadGzipFile:
+        raw = response.content
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
