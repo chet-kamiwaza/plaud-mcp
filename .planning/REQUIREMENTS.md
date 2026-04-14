@@ -9,13 +9,13 @@ Requirements for milestone v1.1, focused on Podman support for local macOS workf
 
 ### Runtime Compatibility
 
-- [ ] **RT-01**: The project can be built and started locally on macOS using Podman in addition to Docker Desktop
-- [ ] **RT-02**: Container configuration, mounted data paths, and required environment variables behave correctly under both supported runtimes
+- [x] **RT-01**: The project can be built and started locally on macOS using Podman in addition to Docker Desktop
+- [x] **RT-02**: Container configuration, mounted data paths, and required environment variables behave correctly under both supported runtimes
 
 ### Local Validation
 
-- [ ] **VAL-01**: The repository defines a repeatable local verification flow for Podman that covers image build, service startup, and automated tests on a Mac laptop
-- [ ] **VAL-02**: Docker Desktop remains a documented and non-broken local verification path after Podman support is added
+- [x] **VAL-01**: The repository defines a repeatable local verification flow for Podman that covers image build, service startup, and automated tests on a Mac laptop
+- [x] **VAL-02**: Docker Desktop remains a documented and non-broken local verification path after Podman support is added
 
 ### Documentation
 
@@ -41,10 +41,10 @@ Requirements for milestone v1.1, focused on Podman support for local macOS workf
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RT-01 | Phase 5 | Pending |
-| RT-02 | Phase 5 | Pending |
-| VAL-01 | Phase 6 | Pending |
-| VAL-02 | Phase 6 | Pending |
+| RT-01 | Phase 5 | Complete |
+| RT-02 | Phase 5 | Complete |
+| VAL-01 | Phase 6 | Complete |
+| VAL-02 | Phase 6 | Complete |
 | DOC-01 | Phase 7 | Pending |
 | DOC-02 | Phase 7 | Pending |
 
@@ -55,4 +55,4 @@ Requirements for milestone v1.1, focused on Podman support for local macOS workf
 
 ---
 *Requirements defined: 2026-04-13*
-*Last updated: 2026-04-13 after milestone v1.1 definition*
+*Last updated: 2026-04-14 after Phase 6 completion*
