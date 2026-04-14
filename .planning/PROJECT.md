@@ -8,20 +8,15 @@ Plaud MCP Server is a self-hosted MCP server that exposes a user's Plaud recordi
 
 An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
 
-## Current State
+## Current Milestone: v1.2 Release Readiness
 
-**Shipped milestone:** v1.1 Podman Support
+**Goal:** Repair the docs and repo surface so the project’s actual purpose, setup, and release shape are coherent and ready for public consumption.
 
-**Delivered:**
-- Podman-compatible local container workflow in addition to Docker Desktop
-- Local macOS validation flow using repo-owned runtime and verification scripts
-- README guidance for Podman installation, runtime selection, validation, troubleshooting, and rollout notes
-
-## Next Milestone Goals
-
-No next milestone is defined yet.
-
-Start one with `/gsd-new-milestone`.
+**Target features:**
+- Rewrite the README and supporting docs so they clearly explain what this project is, who it is for, and how it is meant to be used
+- Align the repo’s public setup, auth, transport, and runtime guidance with the real code paths and validated workflows
+- Improve release-facing repo assets and metadata so the project looks intentional and publishable
+- Add a release sanity pass that verifies the documented flows and repo surface before shipping
 
 ## Requirements
 
@@ -39,7 +34,9 @@ Start one with `/gsd-new-milestone`.
 
 ### Active
 
-None — no active milestone is defined.
+- [ ] The public docs explain the project intent, auth modes, transports, and tool surface without contradiction or misleading runtime guidance
+- [ ] The repo’s release-facing files and metadata are coherent enough for public consumption and onboarding
+- [ ] The documented setup and verification flows are validated against the actual code and repo commands before release
 
 ### Out of Scope
 
@@ -51,7 +48,7 @@ None — no active milestone is defined.
 
 The project already ships a Dockerfile, `docker-compose.yml`, and README workflows that assume Docker Desktop. Podman support is currently only tracked as a backlog item, but the immediate need is to make local macOS usage work with Podman as well, including a clear install path and local verification steps. Because this project handles sensitive Plaud credentials, any runtime changes must preserve the current discipline around injected secrets, mounted token state, and non-root container behavior.
 
-Current state: milestone v1.1 is complete and archived. The project now supports Docker Desktop and Podman for validated local macOS workflows, and the public README documents the supported setup and troubleshooting path.
+Current state: milestone v1.1 is complete and archived. The runtime work is in place, but the docs and release surface still need a deeper pass because the current README does not reliably communicate the project’s real intent or public usage model. The next milestone is therefore about release readiness, not another runtime feature.
 
 ## Constraints
 
@@ -68,6 +65,7 @@ Current state: milestone v1.1 is complete and archived. The project now supports
 | Treat Podman support as the next milestone instead of a backlog note | The user explicitly wants local Podman support now, and the repo already contains the Docker-based baseline to extend | ✓ Good |
 | Scope this milestone to local macOS parity, not broad runtime redesign | The immediate value is reliable local build/run/test support on one laptop, not abstracting every possible container platform | ✓ Good |
 | Keep Docker Desktop as a first-class supported path while adding Podman | Existing docs and users already assume Docker, so Podman must be additive rather than disruptive | ✓ Validated in Phases 5-6 |
+| Treat the next milestone as release readiness instead of more runtime expansion | The immediate issue is not missing runtime support anymore; it is that the docs and repo surface do not yet present the project clearly or credibly for release | — Pending |
 
 ## Evolution
 
@@ -87,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after v1.1 milestone completion*
+*Last updated: 2026-04-14 after starting milestone v1.2 Release Readiness*

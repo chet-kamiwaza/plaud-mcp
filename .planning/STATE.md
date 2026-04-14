@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Podman Support
-status: archived
-stopped_at: Milestone v1.1 archived; no active milestone
-last_updated: "2026-04-14T13:28:00.000Z"
-last_activity: 2026-04-14 -- Milestone v1.1 archived
+milestone: v1.2
+milestone_name: Release Readiness
+status: defining_requirements
+stopped_at: Milestone v1.2 defined and ready for `/gsd-plan-phase 8`
+last_updated: "2026-04-14T13:34:00.000Z"
+last_activity: 2026-04-14 -- Milestone v1.2 started
 progress:
   total_phases: 3
-  completed_phases: 3
+  completed_phases: 0
   total_plans: 6
-  completed_plans: 6
-  percent: 100
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13)
 
 **Core value:** An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
-**Current focus:** No active milestone
+**Current focus:** Phase 8 — Product Narrative and README Repair
 
 ## Current Position
 
-Phase: None
-Plan: None
-Status: Milestone archived
-Last activity: 2026-04-14 -- Milestone v1.1 archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-14 -- Milestone v1.2 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 0
 - Average duration: 21.5 min
 - Total execution time: 1.0 hours
 
@@ -44,13 +44,11 @@ Progress: [██████████] 100%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 5 | 2 | 43 min | 21.5 min |
-| 6 | 2 | 18 min | 9 min |
-| 7 | 2 | 16 min | 8 min |
+| - | - | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 23 min, 20 min, 10 min, 8 min
+- Last 5 plans: none
 - Trend: Stable
 
 ## Accumulated Context
@@ -70,11 +68,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Podman currently delegates compose to an external compose provider on this machine; Phase 6/7 should document that caveat
-None.
+- The current public docs do not reliably communicate the project intent or public usage model
+- Release-facing repo files may still be inconsistent with the actual product and validated workflows
 
 ## Session Continuity
 
 Last session: 2026-04-14 08:40 EDT
-Stopped at: Milestone v1.1 archived; no active milestone
+Stopped at: Milestone v1.2 defined and ready for `/gsd-plan-phase 8`
 Resume file: None
