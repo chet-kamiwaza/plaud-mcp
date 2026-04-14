@@ -8,15 +8,14 @@ Plaud MCP Server is a self-hosted MCP server that exposes a user's Plaud recordi
 
 An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
 
-## Current Milestone: None Active
+## Current Milestone: v1.3 Code Scanning Fixes
 
-**Latest completed milestone:** v1.2 Release Readiness
+**Goal:** Fix all open GitHub code scanning alerts to bring the repo to a clean lint/analysis state.
 
-**Latest outcome:**
-- README rewritten around the actual product intent and supported usage modes
-- Public `docs/OPERATIONS.md` and `docs/RELEASE-CHECKLIST.md` added
-- Release-facing package metadata improved
-- Package build plus Docker and Podman local verification commands revalidated successfully
+**Target fixes:**
+- Fix markdown table cell count in docs/OPERATIONS.md (markdownlint MD056)
+- Fix shell variable assignment spacing in 3 scripts (shellcheck SC1007)
+- Fix gzip.BadGzipFile member reference in server.py (PyLint E1101)
 
 ## Requirements
 
@@ -34,19 +33,20 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 
 ### Active
 
-- [x] The public docs explain the project intent, auth modes, transports, and tool surface without contradiction or misleading runtime guidance — validated in Phase 8
-- [x] The repo’s release-facing files and metadata are coherent enough for public consumption and onboarding — validated in Phase 9
-- [x] The documented setup and verification flows are validated against the actual code and repo commands before release — validated in Phase 10
+- [ ] All markdown lint alerts are resolved (docs/OPERATIONS.md table fix)
+- [ ] All shellcheck alerts are resolved (SC1007 in 3 shell scripts)
+- [ ] All PyLint alerts are resolved (gzip.BadGzipFile member in server.py)
 
 ### Out of Scope
 
-- Broad deployment redesign beyond the current local/container/Kubernetes architecture — this milestone is about release readiness, not platform expansion
-- New Plaud API features — the milestone is about making the current product understandable and shippable
-- CI release automation beyond the current local verification checklist — deferred for future work
+- Dismissed alerts (already triaged and accepted) — not reopening
+- New linting rules or static analysis tooling changes — fix existing alerts only
+- Broad deployment redesign beyond the current local/container/Kubernetes architecture
+- New Plaud API features
 
 ## Context
 
-Current state: milestone v1.2 is complete. The README now reflects the real product, the repo has a public operations guide and release checklist, and the documented setup and verification paths were revalidated against the live repository. Podman and Docker local validation both pass on the target Mac, and package builds now complete cleanly with modernized metadata.
+Current state: milestone v1.2 is complete. GitHub code scanning shows 8 open alerts (1 markdownlint, 6 shellcheck, 1 PyLint) across 4 files. All are low-severity lint/style issues. This milestone addresses them to reach a clean scanning state.
 
 ## Constraints
 
@@ -85,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after completing milestone v1.2 Release Readiness*
+*Last updated: 2026-04-14 — milestone v1.3 Code Scanning Fixes started*

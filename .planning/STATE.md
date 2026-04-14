@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Release Readiness
-status: idle
-stopped_at: Milestone v1.2 archived; no active milestone
-last_updated: "2026-04-14T14:15:46.000Z"
-last_activity: 2026-04-14 -- Milestone v1.2 archived
+milestone: v1.3
+milestone_name: Code Scanning Fixes
+status: active
+stopped_at: ""
+last_updated: "2026-04-14T16:00:00.000Z"
+last_activity: 2026-04-14 -- Milestone v1.3 started
 progress:
   total_phases: 0
   completed_phases: 0
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-13)
+See: .planning/PROJECT.md (updated 2026-04-14)
 
 **Core value:** An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
-**Current focus:** No active milestone
+**Current focus:** Fix all 8 open GitHub code scanning alerts
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: Idle
-Last activity: 2026-04-14 -- Milestone v1.2 archived
+Status: Defining requirements
+Last activity: 2026-04-14 — Milestone v1.3 started
 
 Progress: [░░░░░░░░░░] 0%
 
