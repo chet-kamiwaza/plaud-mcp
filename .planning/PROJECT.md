@@ -8,15 +8,20 @@ Plaud MCP Server is a self-hosted MCP server that exposes a user's Plaud recordi
 
 An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
 
-## Current Milestone: v1.1 Podman Support
+## Current State
 
-**Goal:** Add Podman support alongside Docker Desktop so the project can be built, run, and tested locally on a Mac with either runtime.
+**Shipped milestone:** v1.1 Podman Support
 
-**Target features:**
+**Delivered:**
 - Podman-compatible local container workflow in addition to Docker Desktop
-- Local macOS setup guidance that includes installing and validating Podman
-- Local test and verification flow that runs against the Podman-based setup
-- Updated docs covering the feature enhancement, setup, usage, and troubleshooting
+- Local macOS validation flow using repo-owned runtime and verification scripts
+- README guidance for Podman installation, runtime selection, validation, troubleshooting, and rollout notes
+
+## Next Milestone Goals
+
+No next milestone is defined yet.
+
+Start one with `/gsd-new-milestone`.
 
 ## Requirements
 
@@ -34,7 +39,7 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 
 ### Active
 
-None — milestone requirements are complete.
+None — no active milestone is defined.
 
 ### Out of Scope
 
@@ -46,7 +51,7 @@ None — milestone requirements are complete.
 
 The project already ships a Dockerfile, `docker-compose.yml`, and README workflows that assume Docker Desktop. Podman support is currently only tracked as a backlog item, but the immediate need is to make local macOS usage work with Podman as well, including a clear install path and local verification steps. Because this project handles sensitive Plaud credentials, any runtime changes must preserve the current discipline around injected secrets, mounted token state, and non-root container behavior.
 
-Current state: dual-runtime local execution, validation, and user-facing documentation are complete for the target macOS environment. The README now documents Podman installation, runtime selection, validation commands, troubleshooting, and the validated support boundaries alongside Docker Desktop.
+Current state: milestone v1.1 is complete and archived. The project now supports Docker Desktop and Podman for validated local macOS workflows, and the public README documents the supported setup and troubleshooting path.
 
 ## Constraints
 
@@ -82,4 +87,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after Phase 7 completion*
+*Last updated: 2026-04-14 after v1.1 milestone completion*
