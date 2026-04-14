@@ -8,15 +8,15 @@ Plaud MCP Server is a self-hosted MCP server that exposes a user's Plaud recordi
 
 An MCP client can reliably query Plaud data through a self-hosted server using injected credentials, without depending on the Plaud desktop app at runtime.
 
-## Current Milestone: v1.2 Release Readiness
+## Current Milestone: None Active
 
-**Goal:** Repair the docs and repo surface so the project’s actual purpose, setup, and release shape are coherent and ready for public consumption.
+**Latest completed milestone:** v1.2 Release Readiness
 
-**Target features:**
-- Rewrite the README and supporting docs so they clearly explain what this project is, who it is for, and how it is meant to be used
-- Align the repo’s public setup, auth, transport, and runtime guidance with the real code paths and validated workflows
-- Improve release-facing repo assets and metadata so the project looks intentional and publishable
-- Add a release sanity pass that verifies the documented flows and repo surface before shipping
+**Latest outcome:**
+- README rewritten around the actual product intent and supported usage modes
+- Public `docs/OPERATIONS.md` and `docs/RELEASE-CHECKLIST.md` added
+- Release-facing package metadata improved
+- Package build plus Docker and Podman local verification commands revalidated successfully
 
 ## Requirements
 
