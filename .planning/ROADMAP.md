@@ -12,9 +12,9 @@ This milestone focuses on making Plaud MCP Server release-ready as a public repo
 - Integer phases (8, 9, 10): Planned milestone work
 - Decimal phases (8.1, 8.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 8: Product Narrative and README Repair** - Rewrite the docs so they reflect the real project intent, usage modes, and supported workflows
-- [ ] **Phase 9: Repo Surface and Release Assets** - Tighten the repo’s public-facing files and release-oriented onboarding surface
-- [ ] **Phase 10: Release Verification and Ship Checklist** - Validate the documented flows and record a release-readiness result
+- [x] **Phase 8: Product Narrative and README Repair** - Rewrite the docs so they reflect the real project intent, usage modes, and supported workflows
+- [x] **Phase 9: Repo Surface and Release Assets** - Tighten the repo’s public-facing files and release-oriented onboarding surface
+- [x] **Phase 10: Release Verification and Ship Checklist** - Validate the documented flows and record a release-readiness result
 
 ## Phase Details
 
@@ -29,8 +29,8 @@ This milestone focuses on making Plaud MCP Server release-ready as a public repo
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: Audit and rewrite the README around the real product intent and user flows
-- [ ] 08-02: Align README setup, auth, transport, and runtime guidance with the validated code paths
+- [x] 08-01: Audit and rewrite the README around the real product intent and user flows
+- [x] 08-02: Align README setup, auth, transport, and runtime guidance with the validated code paths
 
 ### Phase 9: Repo Surface and Release Assets
 **Goal**: Make the repository itself look intentional and release-ready for someone encountering it fresh.
@@ -43,8 +43,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: Audit and improve release-facing repo files and metadata
-- [ ] 09-02: Add or refine public onboarding assets needed for releasability
+- [x] 09-01: Audit and improve release-facing repo files and metadata
+- [x] 09-02: Add or refine public onboarding assets needed for releasability
 
 ### Phase 10: Release Verification and Ship Checklist
 **Goal**: Verify the repo is genuinely releasable by checking the documented flows against the actual code and recording the result.
@@ -57,8 +57,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: Run and capture release-oriented validation for the documented flows
-- [ ] 10-02: Produce the release-readiness checklist and final milestone verification record
+- [x] 10-01: Run and capture release-oriented validation for the documented flows
+- [x] 10-02: Produce the release-readiness checklist and final milestone verification record
 
 ## Progress
 
@@ -67,6 +67,6 @@ Phases execute in numeric order: 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. Product Narrative and README Repair | 0/2 | Not started | - |
-| 9. Repo Surface and Release Assets | 0/2 | Not started | - |
-| 10. Release Verification and Ship Checklist | 0/2 | Not started | - |
+| 8. Product Narrative and README Repair | 2/2 | Complete | 2026-04-14 |
+| 9. Repo Surface and Release Assets | 2/2 | Complete | 2026-04-14 |
+| 10. Release Verification and Ship Checklist | 2/2 | Complete | 2026-04-14 |

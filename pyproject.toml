@@ -5,7 +5,22 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "plaud-mcp"
 version = "0.1.0"
+description = "Self-hosted MCP server for browsing Plaud recordings, transcripts, summaries, highlights, and folders."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
+keywords = ["mcp", "plaud", "claude", "transcripts", "self-hosted"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "httpx>=0.28.1",
     "pydantic-settings>=2.13.1",
@@ -13,14 +28,21 @@ dependencies = [
     "fastmcp>=3.2.3",
 ]
 
+[project.urls]
+Homepage = "https://github.com/chet-kamiwaza/plaud-mcp"
+Repository = "https://github.com/chet-kamiwaza/plaud-mcp"
+Issues = "https://github.com/chet-kamiwaza/plaud-mcp/issues"
+
 [project.scripts]
 plaud-mcp = "plaud_mcp.__main__:main"
 
 [project.optional-dependencies]
 dev = [
+    "build>=1.2.2",
     "pytest>=9.0.3",
     "pytest-asyncio",
     "respx",
+    "tomli>=2.0.1; python_version < '3.11'",
 ]
 
 [tool.setuptools.packages.find]

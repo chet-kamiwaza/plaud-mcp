@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Plaud MCP Server is a self-hosted MCP server that exposes a user's Plaud recordings, transcripts, summaries, highlights, and folder data to Claude and other MCP clients. It wraps Plaud's undocumented cloud API behind a small Python service that can run locally or in containers, and this milestone expands the local container story beyond Docker Desktop to also support Podman on macOS.
+Plaud MCP Server is a self-hosted MCP server that exposes a user's Plaud recordings, transcripts, summaries, highlights, and folder data to Claude and other MCP clients. It wraps Plaud's undocumented cloud API behind a small Python service that can run locally over `stdio`, as an HTTP service in containers, or in Kubernetes.
 
 ## Core Value
 
@@ -34,21 +34,19 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 
 ### Active
 
-- [ ] The public docs explain the project intent, auth modes, transports, and tool surface without contradiction or misleading runtime guidance
-- [ ] The repo’s release-facing files and metadata are coherent enough for public consumption and onboarding
-- [ ] The documented setup and verification flows are validated against the actual code and repo commands before release
+- [x] The public docs explain the project intent, auth modes, transports, and tool surface without contradiction or misleading runtime guidance — validated in Phase 8
+- [x] The repo’s release-facing files and metadata are coherent enough for public consumption and onboarding — validated in Phase 9
+- [x] The documented setup and verification flows are validated against the actual code and repo commands before release — validated in Phase 10
 
 ### Out of Scope
 
-- Kubernetes deployment changes unrelated to local runtime compatibility — this milestone is about local Mac workflows
-- Linux-only Podman tuning or production Podman deployment guidance — not needed for the local support goal
-- Replacing Docker Desktop as the primary documented runtime — the goal is dual support, not migration
+- Broad deployment redesign beyond the current local/container/Kubernetes architecture — this milestone is about release readiness, not platform expansion
+- New Plaud API features — the milestone is about making the current product understandable and shippable
+- CI release automation beyond the current local verification checklist — deferred for future work
 
 ## Context
 
-The project already ships a Dockerfile, `docker-compose.yml`, and README workflows that assume Docker Desktop. Podman support is currently only tracked as a backlog item, but the immediate need is to make local macOS usage work with Podman as well, including a clear install path and local verification steps. Because this project handles sensitive Plaud credentials, any runtime changes must preserve the current discipline around injected secrets, mounted token state, and non-root container behavior.
-
-Current state: milestone v1.1 is complete and archived. The runtime work is in place, but the docs and release surface still need a deeper pass because the current README does not reliably communicate the project’s real intent or public usage model. The next milestone is therefore about release readiness, not another runtime feature.
+Current state: milestone v1.2 is complete. The README now reflects the real product, the repo has a public operations guide and release checklist, and the documented setup and verification paths were revalidated against the live repository. Podman and Docker local validation both pass on the target Mac, and package builds now complete cleanly with modernized metadata.
 
 ## Constraints
 
@@ -65,7 +63,9 @@ Current state: milestone v1.1 is complete and archived. The runtime work is in p
 | Treat Podman support as the next milestone instead of a backlog note | The user explicitly wants local Podman support now, and the repo already contains the Docker-based baseline to extend | ✓ Good |
 | Scope this milestone to local macOS parity, not broad runtime redesign | The immediate value is reliable local build/run/test support on one laptop, not abstracting every possible container platform | ✓ Good |
 | Keep Docker Desktop as a first-class supported path while adding Podman | Existing docs and users already assume Docker, so Podman must be additive rather than disruptive | ✓ Validated in Phases 5-6 |
-| Treat the next milestone as release readiness instead of more runtime expansion | The immediate issue is not missing runtime support anymore; it is that the docs and repo surface do not yet present the project clearly or credibly for release | — Pending |
+| Treat the next milestone as release readiness instead of more runtime expansion | The immediate issue after v1.1 was public clarity and releasability, not more runtime capability | ✓ Validated in Phases 8-10 |
+| Split public docs into a concise README plus a public operations guide | The README needed a stronger narrative, but detailed runtime and deployment guidance still needed a durable public home | ✓ Good |
+| Include package build and both local runtime verification commands in release readiness | A release claim is weak unless the docs, packaging, and validated runtime commands are all rechecked together | ✓ Good |
 
 ## Evolution
 
@@ -85,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after starting milestone v1.2 Release Readiness*
+*Last updated: 2026-04-14 after completing milestone v1.2 Release Readiness*

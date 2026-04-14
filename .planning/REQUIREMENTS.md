@@ -9,18 +9,18 @@ Requirements for milestone v1.2, focused on release readiness and documentation 
 
 ### Documentation Clarity
 
-- [ ] **DOCS-01**: The README clearly explains what the project does, who it is for, and the main supported usage modes
-- [ ] **DOCS-02**: The README documents auth modes, transports, and runtime workflows in a way that matches the actual code and validated commands
+- [x] **DOCS-01**: The README clearly explains what the project does, who it is for, and the main supported usage modes
+- [x] **DOCS-02**: The README documents auth modes, transports, and runtime workflows in a way that matches the actual code and validated commands
 
 ### Repo Surface
 
-- [ ] **REPO-01**: Release-facing repo files and metadata are coherent enough for public consumption and onboarding
-- [ ] **REPO-02**: The repository includes a maintainable release-oriented overview of how to install, run, and verify the project without relying on internal planning artifacts
+- [x] **REPO-01**: Release-facing repo files and metadata are coherent enough for public consumption and onboarding
+- [x] **REPO-02**: The repository includes a maintainable release-oriented overview of how to install, run, and verify the project without relying on internal planning artifacts
 
 ### Release Verification
 
-- [ ] **REL-01**: The documented setup and verification flows are checked against the actual repo commands before release
-- [ ] **REL-02**: The milestone produces a clear release-readiness record identifying what was validated and any remaining public caveats
+- [x] **REL-01**: The documented setup and verification flows are checked against the actual repo commands before release
+- [x] **REL-02**: The milestone produces a clear release-readiness record identifying what was validated and any remaining public caveats
 
 ## v2 Requirements
 
@@ -41,12 +41,12 @@ Requirements for milestone v1.2, focused on release readiness and documentation 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCS-01 | Phase 8 | Pending |
-| DOCS-02 | Phase 8 | Pending |
-| REPO-01 | Phase 9 | Pending |
-| REPO-02 | Phase 9 | Pending |
-| REL-01 | Phase 10 | Pending |
-| REL-02 | Phase 10 | Pending |
+| DOCS-01 | Phase 8 | Complete |
+| DOCS-02 | Phase 8 | Complete |
+| REPO-01 | Phase 9 | Complete |
+| REPO-02 | Phase 9 | Complete |
+| REL-01 | Phase 10 | Complete |
+| REL-02 | Phase 10 | Complete |
 
 **Coverage:**
 - v1 requirements: 6 total
