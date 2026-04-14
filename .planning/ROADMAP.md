@@ -12,7 +12,7 @@ This milestone advances the existing containerized Plaud MCP server by adding Po
 - Integer phases (5, 6, 7): Planned milestone work
 - Decimal phases (5.1, 5.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 5: Podman Runtime Compatibility** - Make the local container workflow work under Podman without breaking Docker Desktop
+- [x] **Phase 5: Podman Runtime Compatibility** - Make the local container workflow work under Podman without breaking Docker Desktop
 - [ ] **Phase 6: Local Mac Validation Workflow** - Define and verify the Podman-based local build, startup, and test path on macOS
 - [ ] **Phase 7: Documentation and Rollout Guidance** - Update README and related docs for installation, usage, and troubleshooting across both runtimes
 
@@ -29,8 +29,8 @@ This milestone advances the existing containerized Plaud MCP server by adding Po
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Audit and update runtime-specific container configuration for Podman compatibility
-- [ ] 05-02: Add any repo-level command, script, or config changes needed to support both Docker Desktop and Podman locally
+- [x] 05-01: Audit and update runtime-specific container configuration for Podman compatibility
+- [x] 05-02: Add any repo-level command, script, or config changes needed to support both Docker Desktop and Podman locally
 
 ### Phase 6: Local Mac Validation Workflow
 **Goal**: Prove the project can be verified locally on a Mac laptop through a repeatable Podman workflow.
@@ -67,6 +67,6 @@ Phases execute in numeric order: 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Podman Runtime Compatibility | 0/2 | Not started | - |
+| 5. Podman Runtime Compatibility | 2/2 | Complete | 2026-04-14 |
 | 6. Local Mac Validation Workflow | 0/2 | Not started | - |
 | 7. Documentation and Rollout Guidance | 0/2 | Not started | - |
