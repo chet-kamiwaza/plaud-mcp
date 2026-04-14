@@ -19,8 +19,8 @@ Requirements for milestone v1.1, focused on Podman support for local macOS workf
 
 ### Documentation
 
-- [ ] **DOC-01**: The README documents how to install and validate Podman on macOS for this project
-- [ ] **DOC-02**: The README documents runtime-specific commands, expected prerequisites, and troubleshooting for both Docker Desktop and Podman users
+- [x] **DOC-01**: The README documents how to install and validate Podman on macOS for this project
+- [x] **DOC-02**: The README documents runtime-specific commands, expected prerequisites, and troubleshooting for both Docker Desktop and Podman users
 
 ## v2 Requirements
 
@@ -45,8 +45,8 @@ Requirements for milestone v1.1, focused on Podman support for local macOS workf
 | RT-02 | Phase 5 | Complete |
 | VAL-01 | Phase 6 | Complete |
 | VAL-02 | Phase 6 | Complete |
-| DOC-01 | Phase 7 | Pending |
-| DOC-02 | Phase 7 | Pending |
+| DOC-01 | Phase 7 | Complete |
+| DOC-02 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 6 total
@@ -55,4 +55,4 @@ Requirements for milestone v1.1, focused on Podman support for local macOS workf
 
 ---
 *Requirements defined: 2026-04-13*
-*Last updated: 2026-04-14 after Phase 6 completion*
+*Last updated: 2026-04-14 after Phase 7 completion*

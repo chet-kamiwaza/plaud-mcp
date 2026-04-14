@@ -30,10 +30,11 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 - ✓ Support Podman-based local container workflows on macOS without regressing Docker Desktop support — validated in Phases 5-6
 - ✓ Provide a repeatable local validation path for build, startup, and test execution on a Mac laptop using Podman — validated in Phase 6
 - ✓ Keep container auth, mounted state, and transport behavior consistent across supported runtimes — validated in Phase 5
+- ✓ Document Podman installation, machine setup, and runtime-specific usage for local development — validated in Phase 7
 
 ### Active
 
-- [ ] Document Podman installation, machine setup, and runtime-specific usage for local development
+None — milestone requirements are complete.
 
 ### Out of Scope
 
@@ -45,7 +46,7 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 
 The project already ships a Dockerfile, `docker-compose.yml`, and README workflows that assume Docker Desktop. Podman support is currently only tracked as a backlog item, but the immediate need is to make local macOS usage work with Podman as well, including a clear install path and local verification steps. Because this project handles sensitive Plaud credentials, any runtime changes must preserve the current discipline around injected secrets, mounted token state, and non-root container behavior.
 
-Current state: dual-runtime local execution and validation now work on the target Mac environment through repo-owned scripts. The remaining milestone work is user-facing documentation for installation, usage, and troubleshooting.
+Current state: dual-runtime local execution, validation, and user-facing documentation are complete for the target macOS environment. The README now documents Podman installation, runtime selection, validation commands, troubleshooting, and the validated support boundaries alongside Docker Desktop.
 
 ## Constraints
 
@@ -81,4 +82,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after Phase 6 completion*
+*Last updated: 2026-04-14 after Phase 7 completion*
