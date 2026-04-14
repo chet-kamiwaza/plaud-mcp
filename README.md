@@ -22,6 +22,46 @@ Eleven tools available to Claude once connected:
 
 ## Quick start
 
+Local container workflows now support both Docker Desktop and Podman on macOS. The repo-owned helper scripts below are the canonical way to build, start, and validate the service locally.
+
+### Choose a runtime
+
+- **Docker Desktop** — supported and still works for local macOS usage
+- **Podman** — supported on macOS with a running `podman machine`
+
+### Runtime prerequisites
+
+#### Docker Desktop
+
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Start Docker Desktop and wait for it to finish booting
+
+#### Podman on macOS
+
+```bash
+brew install podman
+podman machine init   # only needed the first time
+podman machine start
+```
+
+Confirm the Podman VM is ready before continuing:
+
+```bash
+podman machine list
+podman info
+```
+
+### Validate your local runtime
+
+Run the repo-owned validation flow before or after setup changes:
+
+```bash
+bash scripts/verify-local-mac.sh docker
+bash scripts/verify-local-mac.sh podman
+```
+
+If you want to validate both runtimes on the same machine, run them sequentially. Both use loopback port `8080` during local verification.
+
 Choose the auth mode that matches your Plaud account:
 
 ### Option A — Auto-refresh (you sign in to Plaud with email + password)
@@ -33,7 +73,9 @@ git clone https://github.com/chet-kamiwaza/plaud-mcp
 cd plaud-mcp
 cp .env.example .env
 # Edit .env: set PLAUD_AUTO_REFRESH=true, PLAUD_EMAIL, PLAUD_PASSWORD, PLAUD_DEVICE_ID
-docker compose up -d
+bash scripts/container-runtime.sh docker up
+# or:
+# bash scripts/container-runtime.sh podman up
 claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
 ```
 
@@ -49,7 +91,9 @@ python scripts/setup-auth.py
 # Copy the plaud:// redirect URL from the address bar and paste it back.
 cp .env.example .env
 # Set PLAUD_TOKEN_FILE=/app/data/plaud.token, PLAUD_DEVICE_ID=...
-docker compose up -d
+bash scripts/container-runtime.sh docker up
+# or:
+# bash scripts/container-runtime.sh podman up
 claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
 ```
 
@@ -63,16 +107,34 @@ Extract the token directly from a logged-in macOS Plaud desktop app. Requires re
 pip install cryptography
 python scripts/get-token.py
 cp .env.example .env          # set PLAUD_TOKEN and PLAUD_DEVICE_ID
-docker compose up -d
+bash scripts/container-runtime.sh docker up
+# or:
+# bash scripts/container-runtime.sh podman up
 claude mcp add --transport http --scope user plaud http://localhost:8080/mcp
 ```
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- Either [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Podman installed for container-based local usage on macOS
 - [Claude Code](https://claude.ai/code) CLI installed
 - A Plaud account (any sign-in method)
 - For Option C only: the Plaud desktop app on macOS, signed in
+
+## Local runtime commands
+
+Use the repo-owned runtime helper for local container actions:
+
+```bash
+bash scripts/container-runtime.sh docker build
+bash scripts/container-runtime.sh docker up
+bash scripts/container-runtime.sh docker down
+
+bash scripts/container-runtime.sh podman build
+bash scripts/container-runtime.sh podman up
+bash scripts/container-runtime.sh podman down
+```
+
+The helper keeps Docker Desktop and Podman on the same compose and env contract. The service binds locally on `127.0.0.1:8080`.
 
 ## Usage
 
@@ -92,7 +154,7 @@ The behaviour depends on which auth mode you picked:
 
 - **Option A (auto-refresh):** Nothing to do. The server decodes the JWT's `exp` claim, and re-logs in automatically when the token is within 30 days of expiry. The new token is persisted to the mounted `plaud-data` volume.
 - **Option B (SSO browser auth):** Re-run `python scripts/setup-auth.py` once every ~10 months. The script prints the expiry date when it writes the token.
-- **Option C (manual token):** Re-run `python scripts/get-token.py` every ~26 days, update `.env`, and `docker compose up -d --force-recreate`.
+- **Option C (manual token):** Re-run `python scripts/get-token.py` every ~26 days, update `.env`, and restart with `bash scripts/container-runtime.sh <docker|podman> up`.
 
 For Kubernetes/mounted-secret workflows, `PLAUD_TOKEN_FILE` is reloaded on subsequent requests without restarting the process — useful when an external system rotates the token.
 
@@ -109,6 +171,34 @@ Add to Claude Code with `--transport stdio` instead of `--transport http`.
 
 ```bash
 docker build -t plaud-mcp:latest .
+```
+
+Or with Podman:
+
+```bash
+podman build -t plaud-mcp:latest .
+```
+
+## Troubleshooting
+
+- **Port `8080` is already in use**
+  Stop the existing listener before running `bash scripts/verify-local-mac.sh docker`, `bash scripts/verify-local-mac.sh podman`, or either runtime helper `up` command.
+- **Podman is installed but local startup fails**
+  Check `podman machine list` and make sure the machine is running. If needed, run `podman machine start` and retry `bash scripts/verify-local-mac.sh podman`.
+- **Docker commands fail even though Docker is installed**
+  Docker Desktop may not be fully started yet. Wait for Docker Desktop to finish booting, then retry `bash scripts/verify-local-mac.sh docker`.
+- **Podman prints a compose-provider message on macOS**
+  That is expected on the validated Mac environment used for this milestone. Podman may delegate compose execution to an external compose provider while still using the repo-owned runtime commands successfully.
+- **You want to validate both runtimes on one Mac**
+  Run the Podman and Docker validation commands sequentially, not concurrently, because both use loopback port `8080` during startup checks.
+
+## Runtime support note
+
+This repo now supports Podman on macOS in addition to Docker Desktop. Docker Desktop remains a supported local path, and Podman has been validated locally with the repo-owned runtime and verification scripts:
+
+```bash
+bash scripts/container-runtime.sh <docker|podman> up
+bash scripts/verify-local-mac.sh <docker|podman>
 ```
 
 ## Stack
