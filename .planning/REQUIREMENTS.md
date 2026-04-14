@@ -39,17 +39,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MDLINT-01 | — | Pending |
-| SHELL-01 | — | Pending |
-| SHELL-02 | — | Pending |
-| SHELL-03 | — | Pending |
-| PYLINT-01 | — | Pending |
+| MDLINT-01 | Phase 11 | Pending |
+| SHELL-01 | Phase 11 | Pending |
+| SHELL-02 | Phase 11 | Pending |
+| SHELL-03 | Phase 11 | Pending |
+| PYLINT-01 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 5 total
-- Mapped to phases: 0
-- Unmapped: 5
+- Mapped to phases: 5
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-14*
-*Last updated: 2026-04-14 after initial definition*
+*Last updated: 2026-04-14 after roadmap creation*
