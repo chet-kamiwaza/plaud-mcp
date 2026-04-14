@@ -27,13 +27,13 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 - ✓ The server runs as a single Python service over stdio or streamable HTTP with container and Kubernetes deployment paths — existing
 - ✓ Authentication can be supplied by direct environment variables or a rotated token file — existing
 - ✓ The codebase already has unit tests covering core client and tool flows — existing
+- ✓ Support Podman-based local container workflows on macOS without regressing Docker Desktop support — validated in Phases 5-6
+- ✓ Provide a repeatable local validation path for build, startup, and test execution on a Mac laptop using Podman — validated in Phase 6
+- ✓ Keep container auth, mounted state, and transport behavior consistent across supported runtimes — validated in Phase 5
 
 ### Active
 
-- [ ] Support Podman-based local container workflows on macOS without regressing Docker Desktop support
-- [ ] Provide a repeatable local validation path for build, startup, and test execution on a Mac laptop using Podman
 - [ ] Document Podman installation, machine setup, and runtime-specific usage for local development
-- [ ] Keep container auth, mounted state, and transport behavior consistent across supported runtimes
 
 ### Out of Scope
 
@@ -44,6 +44,8 @@ An MCP client can reliably query Plaud data through a self-hosted server using i
 ## Context
 
 The project already ships a Dockerfile, `docker-compose.yml`, and README workflows that assume Docker Desktop. Podman support is currently only tracked as a backlog item, but the immediate need is to make local macOS usage work with Podman as well, including a clear install path and local verification steps. Because this project handles sensitive Plaud credentials, any runtime changes must preserve the current discipline around injected secrets, mounted token state, and non-root container behavior.
+
+Current state: dual-runtime local execution and validation now work on the target Mac environment through repo-owned scripts. The remaining milestone work is user-facing documentation for installation, usage, and troubleshooting.
 
 ## Constraints
 
@@ -59,7 +61,7 @@ The project already ships a Dockerfile, `docker-compose.yml`, and README workflo
 |----------|-----------|---------|
 | Treat Podman support as the next milestone instead of a backlog note | The user explicitly wants local Podman support now, and the repo already contains the Docker-based baseline to extend | ✓ Good |
 | Scope this milestone to local macOS parity, not broad runtime redesign | The immediate value is reliable local build/run/test support on one laptop, not abstracting every possible container platform | ✓ Good |
-| Keep Docker Desktop as a first-class supported path while adding Podman | Existing docs and users already assume Docker, so Podman must be additive rather than disruptive | — Pending |
+| Keep Docker Desktop as a first-class supported path while adding Podman | Existing docs and users already assume Docker, so Podman must be additive rather than disruptive | ✓ Validated in Phases 5-6 |
 
 ## Evolution
 
@@ -79,4 +81,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-13 after milestone v1.1 definition*
+*Last updated: 2026-04-14 after Phase 6 completion*
