@@ -365,7 +365,7 @@ async def get_audio_url(file_id: str) -> dict:
     opus_url = resp.get("temp_url_opus")
     if not wav_url and not opus_url:
         raise ValueError(f"No audio download URLs returned for file_id={file_id}")
-    result: dict[str, Any] = {"file_id": file_id}
+    result = {"file_id": file_id}
     if wav_url:
         result["wav_url"] = wav_url
     if opus_url:
