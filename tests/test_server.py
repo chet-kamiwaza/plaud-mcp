@@ -1,5 +1,5 @@
 """
-Unit tests for all 11 Plaud MCP tools in plaud_mcp.server.
+Unit tests for all 12 Plaud MCP tools in plaud_mcp.server.
 
 Mocking strategy:
   - PlaudClient is patched at "plaud_mcp.server.PlaudClient" so that
@@ -253,7 +253,80 @@ class TestGetFile:
 
 
 # ---------------------------------------------------------------------------
-# TOOL-06: get_transcript
+# TOOL-06: get_audio_url
+# ---------------------------------------------------------------------------
+
+class TestGetAudioUrl:
+    async def test_returns_wav_url(self):
+        resp = {
+            "status": 0,
+            "temp_url": "https://plaud-bucket.s3.amazonaws.com/audiofiles/abc123.ogg?signed",
+            "temp_url_opus": None,
+        }
+        mock_client = make_mock_client(get_side_effects=resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_audio_url
+            result = await get_audio_url("abc123")
+
+        assert result["file_id"] == "abc123"
+        assert "wav_url" in result
+        assert result["wav_url"].startswith("https://")
+        assert "opus_url" not in result
+
+    async def test_returns_both_urls_when_available(self):
+        resp = {
+            "status": 0,
+            "temp_url": "https://plaud-bucket.s3.amazonaws.com/audiofiles/abc123.ogg?signed",
+            "temp_url_opus": "https://plaud-bucket.s3.amazonaws.com/audiofiles/abc123.opus?signed",
+        }
+        mock_client = make_mock_client(get_side_effects=resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_audio_url
+            result = await get_audio_url("abc123")
+
+        assert result["file_id"] == "abc123"
+        assert "wav_url" in result
+        assert "opus_url" in result
+
+    async def test_empty_file_id_raises_value_error(self):
+        with patch("plaud_mcp.server.PlaudClient"):
+            from plaud_mcp.server import get_audio_url
+            with pytest.raises(ValueError, match="file_id must be a non-empty string"):
+                await get_audio_url("")
+
+    async def test_no_urls_returned_raises_value_error(self):
+        resp = {
+            "status": 0,
+            "temp_url": None,
+            "temp_url_opus": None,
+        }
+        mock_client = make_mock_client(get_side_effects=resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_audio_url
+            with pytest.raises(ValueError, match="No audio download URLs returned"):
+                await get_audio_url("bad123")
+
+    async def test_strips_whitespace_from_file_id(self):
+        resp = {
+            "status": 0,
+            "temp_url": "https://plaud-bucket.s3.amazonaws.com/audiofiles/abc123.ogg?signed",
+            "temp_url_opus": None,
+        }
+        mock_client = make_mock_client(get_side_effects=resp)
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client):
+            from plaud_mcp.server import get_audio_url
+            await get_audio_url("  abc123  ")
+
+        call_args = mock_client.get.call_args
+        assert call_args[0][0] == "/file/temp-url/abc123"
+
+
+# ---------------------------------------------------------------------------
+# TOOL-07: get_transcript
 # ---------------------------------------------------------------------------
 
 class TestGetTranscript:

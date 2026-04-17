@@ -1,18 +1,19 @@
 """
 Plaud MCP Server — FastMCP application exposing Plaud cloud API data as tools.
 
-Provides 11 tools:
+Provides 12 tools:
   TOOL-01: check_connection     — verify token, return file count
   TOOL-02: get_file_count       — return total recordings count
   TOOL-03: get_recent_files     — list files from last N days
   TOOL-04: get_files            — list files with optional date range
   TOOL-05: get_file             — get metadata for a specific recording
-  TOOL-06: get_transcript       — fetch transcript via signed S3 URL
-  TOOL-07: get_summary          — fetch AI summary via signed S3 URL
-  TOOL-08: get_highlights       — fetch AI highlights via signed S3 URL
-  TOOL-09: list_folders         — list Plaud folders (file tags)
-  TOOL-10: get_folder_files     — list files scoped to a folder
-  TOOL-11: search_transcripts   — client-side transcript search
+  TOOL-06: get_audio_url        — get temporary pre-signed audio download URLs
+  TOOL-07: get_transcript       — fetch transcript via signed S3 URL
+  TOOL-08: get_summary          — fetch AI summary via signed S3 URL
+  TOOL-09: get_highlights       — fetch AI highlights via signed S3 URL
+  TOOL-10: list_folders         — list Plaud folders (file tags)
+  TOOL-11: get_folder_files     — list files scoped to a folder
+  TOOL-12: search_transcripts   — client-side transcript search
 
 Security:
   T-02-01: file_id validated non-empty before URL construction.
@@ -337,6 +338,39 @@ async def _fetch_all_folder_candidate_files(client: PlaudClient) -> list[dict]:
         skip += FILE_LIST_PAGE_SIZE
 
     return files
+
+
+@mcp.tool()
+async def get_audio_url(file_id: str) -> dict:
+    """Return temporary pre-signed download URLs for a recording's audio.
+
+    Calls the Plaud temp-url endpoint which returns time-limited S3 URLs
+    in both WAV and OPUS formats.
+
+    Args:
+        file_id: The Plaud file identifier (non-empty string).
+
+    Returns a dict with file_id, wav_url, and opus_url.
+    Raises ValueError if file_id is empty or no audio URL is returned.
+    """
+    if not file_id or not file_id.strip():
+        raise ValueError("file_id must be a non-empty string")
+    async with PlaudClient() as client:
+        resp = await client.get(
+            f"/file/temp-url/{file_id.strip()}",
+            params={"is_opus": 1},
+        )
+    # temp_url lives at the top level of the response, not under "data"
+    wav_url = resp.get("temp_url")
+    opus_url = resp.get("temp_url_opus")
+    if not wav_url and not opus_url:
+        raise ValueError(f"No audio download URLs returned for file_id={file_id}")
+    result = {"file_id": file_id}
+    if wav_url:
+        result["wav_url"] = wav_url
+    if opus_url:
+        result["opus_url"] = opus_url
+    return result
 
 
 @mcp.tool()
