@@ -68,6 +68,6 @@ jobs:
           jq -r '.runs[] | .automationDetails.id' results.sarif
 
       - name: Upload SARIF results file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4.37.3
         with:
           sarif_file: results.sarif
