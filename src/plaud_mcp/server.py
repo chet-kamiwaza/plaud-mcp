@@ -630,8 +630,9 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
                 transcript_list = transcript_data
             else:
                 transcript_list = transcript_data.get("list", [])
+            # Plaud puts each segment's words in "content"; older data used "text".
             full_text = " ".join(
-                item.get("text", "") for item in transcript_list
+                item.get("content") or item.get("text") or "" for item in transcript_list
             )
             if query.lower() in full_text.lower():
                 idx = full_text.lower().index(query.lower())

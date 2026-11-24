@@ -651,8 +651,9 @@ class TestSearchTranscripts:
                 ],
             },
         }
+        # Real Plaud segments keep the words in "content".
         transcript_data = [
-            {"speaker": "Alice", "text": "We discussed the quarterly budget forecast"},
+            {"speaker": "Alice", "content": "We discussed the quarterly budget forecast"},
         ]
         mock_client = make_mock_client(
             get_side_effects=detail_resp,
