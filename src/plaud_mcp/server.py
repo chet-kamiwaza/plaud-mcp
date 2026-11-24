@@ -625,8 +625,14 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
                 # Skip files with missing or erroring transcripts.
                 continue
 
+            # Handle both formats: {"list": [...]} (gzipped) and [...] (plain JSON)
+            if isinstance(transcript_data, list):
+                transcript_list = transcript_data
+            else:
+                transcript_list = transcript_data.get("list", [])
+            # Plaud puts each segment's words in "content"; older data used "text".
             full_text = " ".join(
-                item.get("text", "") for item in transcript_data.get("list", [])
+                item.get("content") or item.get("text") or "" for item in transcript_list
             )
             if query.lower() in full_text.lower():
                 idx = full_text.lower().index(query.lower())
@@ -647,5 +653,3 @@ async def search_transcripts(query: str, days: int = 30) -> dict:
         "match_count": len(matches),
         "files_searched": len(files),
     }
-
-    return {"query": query, "days": days, "matches": matches, "match_count": len(matches)}
