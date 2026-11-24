@@ -632,6 +632,42 @@ class TestSearchTranscripts:
         assert result["match_count"] == 1
         assert result["matches"][0]["file_id"] == "match1"
 
+    async def test_handles_plain_list_transcript_shape(self):
+        """Transcripts may arrive as a bare list (plain JSON) rather than {"list": [...]}.
+
+        Regression: previously raised "'list' object has no attribute 'get'".
+        """
+        file_in_window = {
+            "id": "match2",
+            "filename": "Strategy Call",
+            "start_time": _ms(86400),
+        }
+        detail_resp = {
+            "status": 0,
+            "data": {
+                "file_id": "match2",
+                "content_list": [
+                    {"data_type": "transaction", "data_link": "https://s3.example.com/m.json"}
+                ],
+            },
+        }
+        transcript_data = [
+            {"speaker": "Alice", "text": "We discussed the quarterly budget forecast"},
+        ]
+        mock_client = make_mock_client(
+            get_side_effects=detail_resp,
+            all_files=[file_in_window],
+        )
+
+        with patch("plaud_mcp.server.PlaudClient", return_value=mock_client), \
+             patch("plaud_mcp.server.asyncio") as mock_asyncio:
+            mock_asyncio.to_thread = AsyncMock(return_value=transcript_data)
+            from plaud_mcp.server import search_transcripts
+            result = await search_transcripts("budget")
+
+        assert result["match_count"] == 1
+        assert result["matches"][0]["file_id"] == "match2"
+
     async def test_empty_query_raises(self):
         with patch("plaud_mcp.server.PlaudClient"):
             from plaud_mcp.server import search_transcripts
